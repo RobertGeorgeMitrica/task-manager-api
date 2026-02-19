@@ -1,6 +1,8 @@
 package com.robert.task_manager;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 
 @Entity
@@ -12,16 +14,16 @@ public class Task {
     private Long id;
 
     @Column(nullable = false)
+    @NotBlank(message = "Title can not be empty!")
+    @Size(min = 3, message = "Title needs to have at least 3 characters!")
     private String title;
 
     private String description;
 
     private boolean completed = false;
 
-    // CONSTRUCTOR GOL (Obligatoriu pentru Spring/Hibernate)
     public Task() {}
 
-    // GETTERI ȘI SETTERI (Spring are nevoie de ei să citească din JSON)
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
 
@@ -32,4 +34,6 @@ public class Task {
     public void setCompleted(boolean completed) { this.completed = completed; }
 
     public Long getId() { return id; }
+
+
 }

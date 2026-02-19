@@ -10,9 +10,7 @@ public class TaskManagerApplication {
 		SpringApplication.run(TaskManagerApplication.class, args);
 	}
 
-
-	//TODO Adăugarea stratului de Service (TaskService.java)
-	//TODO metoda de DELETE,PUT, PATCH în TaskController
+	//TODO
 
 }
 
