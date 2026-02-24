@@ -34,6 +34,8 @@ public class TaskService {
         task.setTitle(taskDetails.getTitle());
         task.setDescription(taskDetails.getDescription());
         task.setCompleted(taskDetails.isCompleted());
+        task.setTimeInterval(taskDetails.getTimeInterval());
+        task.setCategory(taskDetails.getCategory());
         return taskRepository.save(task);
     }
 

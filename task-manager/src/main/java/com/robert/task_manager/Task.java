@@ -22,6 +22,9 @@ public class Task {
 
     private boolean completed = false;
 
+    private String timeInterval;
+    private String category;
+
     public Task() {}
 
     public String getTitle() { return title; }
@@ -33,7 +36,12 @@ public class Task {
     public boolean isCompleted() { return completed; }
     public void setCompleted(boolean completed) { this.completed = completed; }
 
-    public Long getId() { return id; }
+    public String getTimeInterval() { return timeInterval; }
+    public void setTimeInterval(String timeInterval) { this.timeInterval = timeInterval; }
 
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+
+    public Long getId() { return id; }
 
 }

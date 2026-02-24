@@ -10,7 +10,6 @@ public class TaskManagerApplication {
 		SpringApplication.run(TaskManagerApplication.class, args);
 	}
 
-	//TODO incepere frontend
 
 }
 

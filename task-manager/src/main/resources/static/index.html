@@ -2,93 +2,104 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Task Manager Pro</title>
     <style>
-            :root {
-                --primary: #4a90e2;
-                --success: #2ecc71;
-                --danger: #e74c3c;
-                --bg: #f8f9fa;
-            }
+        :root {
+            --primary: #2d6a4f; /* Un verde închis, liniștitor */
+            --success: #52b788;
+            --danger: #e74c3c;
+            --bg: #1b4332;
+        }
 
-            body {
-                font-family: 'Inter', -apple-system, sans-serif;
-                margin: 0; padding: 40px;
-                background: var(--bg); color: #2d3436;
-            }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+                        url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            color: #2d3436;
+        }
 
-            .container { max-width: 1100px; margin: auto; }
+        .container { max-width: 1100px; margin: auto; }
 
-            .card {
-                background: white; padding: 20px; margin-bottom: 20px;
-                border-radius: 12px; border-left: 5px solid var(--primary);
-                box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-                transition: transform 0.2s;
-            }
 
-            .card:hover { transform: translateY(-3px); }
+        .card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            border-left: 5px solid var(--primary);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
 
-            .task-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .card:hover { transform: translateY(-3px); }
 
-            .completed {
-                text-decoration: line-through; color: #b2bec3;
-            }
+        h1 {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-weight: 800;
+            margin-bottom: 30px;
+        }
 
-            .card.is-completed { border-left-color: var(--success); }
+        .task-header { display: flex; justify-content: space-between; align-items: flex-start; }
 
-            input {
-                width: 100%; padding: 12px; margin: 0;
-                border: 2px solid #eee; border-radius: 8px; outline: none;
-                transition: border-color 0.3s; box-sizing: border-box;
-            }
+        .completed { text-decoration: line-through; color: #b2bec3; }
 
-            input:focus { border-color: var(--primary); }
+        .card.is-completed { border-left-color: var(--success); }
 
-            /* Butoanele generale din carduri */
-            .btn {
-                padding: 10px 20px; border-radius: 8px; border: none;
-                font-weight: 600; cursor: pointer; transition: 0.3s;
-            }
+        input, select {
+            width: 100%; padding: 12px; margin: 0;
+            border: 2px solid #eee; border-radius: 8px; outline: none;
+            transition: border-color 0.3s; box-sizing: border-box;
+        }
 
-            .btn-save { background: var(--primary); color: white; width: 100%; }
-            .btn-complete { background: var(--success); color: white; margin-right: 10px; }
-            .btn-undo { background: #636e72; color: white; margin-right: 10px; }
-            .btn-delete { background: var(--danger); color: white; }
-            .btn:hover { opacity: 0.85; transform: scale(0.98); }
+        input:focus, select:focus { border-color: var(--primary); }
 
-            /* --- STILURI NOI PENTRU FILTRARE --- */
-            .filter-container {
-                display: flex;
-                justify-content: center;
-                gap: 10px;
-                margin: 20px 0;
-            }
+        .btn {
+            padding: 10px 20px; border-radius: 8px; border: none;
+            font-weight: 600; cursor: pointer; transition: 0.3s;
+        }
 
-            .btn-filter {
-               background: #e9ecef;
-               border: none;
-               padding: 12px 20px;
-               border-radius: 10px; /* Mai puțin rotunjite pentru aspect de listă */
-               cursor: pointer;
-               font-weight: 600;
-               color: #636e72;
-               text-align: left;
-               padding-left: 30px;
-               display: block;
-               transition: all 0.3s;
-               width: 100%; /* Să ocupe tot spațiul coloanei */
-            }
+        .btn-save { background: var(--primary); color: white; width: 100%; }
+        .btn-complete { background: var(--success); color: white; margin-right: 10px; }
+        .btn-undo { background: #636e72; color: white; margin-right: 10px; }
+        .btn-delete { background: var(--danger); color: white; }
+        .btn:hover { opacity: 0.85; transform: scale(0.98); }
 
-            .btn-filter:hover {
-                background: #dfe6e9;
-            }
 
-            .btn-filter.active-filter {
-                background: var(--primary);
-                color: white;
-                box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3);
-            }
+        .btn-filter {
+           background: rgba(255, 255, 255, 0.1);
+           border: 1px solid rgba(255, 255, 255, 0.2);
+           padding: 12px 20px;
+           border-radius: 10px;
+           cursor: pointer;
+           font-weight: 600;
+           color: white; /* Acum textul este alb să se vadă pe verde */
+           text-align: left;
+           padding-left: 30px;
+           display: block;
+           transition: all 0.3s;
+           width: 100%;
+           backdrop-filter: blur(5px);
+           margin-bottom: 8px;
+        }
+
+        .btn-filter:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-filter.active-filter {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
     </style>
 
 </head>
@@ -97,14 +108,32 @@
 <div class="container">
     <h1>Task Manager</h1>
 
-    <div class="card" style="display: flex; gap: 20px; align-items: center; padding: 20px; border-left: 5px solid var(--primary); margin-bottom: 40px;">
-        <input type="text" id="titleInput" placeholder="Task title..." style="flex: 2;">
-        <input type="text" id="descInput" placeholder="Add a description..." style="flex: 3;">
+    <div class="card" style="display: flex; gap: 15px; align-items: center; padding: 15px; border-left: 5px solid var(--primary); margin-bottom: 40px;">
+        <select id="timeInput" style="flex: 1; padding: 12px; border-radius: 8px; border: 2px solid #eee;">
+            <option value="">Select Time</option>
+            <option value="09:00 - 10:30">09:00 - 10:30</option>
+            <option value="11:30 - 13:00">11:30 - 13:00</option>
+            <option value="14:00 - 15:30">14:00 - 15:30</option>
+            <option value="16:00 - 17:30">16:00 - 17:30</option>
+        </select>
+
+        <input id="titleInput" placeholder="Task Title..." style="flex: 2;" type="text">
+        <input id="descInput" placeholder="Description..." style="flex: 2;" type="text">
+
+        <select id="categoryInput" style="flex: 1; padding: 12px; border-radius: 8px; border: 2px solid #eee;">
+            <option value="">Category</option>
+            <option value="DEEP WORK">DEEP WORK</option>
+            <option value="BREAK">BREAK</option>
+            <option value="SPORT">SPORT</option>
+            <option value="SQL PRACTICE">SQL PRACTICE</option>
+            <option value="DOCUMENTATION">DOCUMENTATION</option>
+        </select>
+
         <button class="btn btn-save" onclick="createTask()" style="width: auto; padding: 12px 30px; white-space: nowrap;">
             Add Task
         </button>
-    </div>
 
+    </div>
     <div style="display: flex; gap: 30px; align-items: flex-start;">
 
         <div style="flex: 1; position: sticky; top: 40px;">
@@ -118,85 +147,107 @@
             </div>
         </div>
 
-        <div style="flex: 3;" id="taskList">
+        <div id="taskList" style="flex: 3;">
         </div>
     </div>
 </div>
 
 
+
+
 <script>
     const API_URL = 'http://localhost:8080/api/tasks';
-     let allTasks = []; // Memoria noastră locală
+    let allTasks = [];
 
-     // --- 1. COMUNICAREA CU SERVERUL ---
-
-     async function fetchTasks() {
-         try {
-             const response = await fetch(API_URL);
-             allTasks = await response.json();
-             renderTasks(allTasks); // După ce le luăm, le desenăm
-         } catch (error) {
-             console.error("Error fetching tasks:", error);
-         }
-     }
-
-     async function createTask() {
-         const title = document.getElementById('titleInput').value;
-         const description = document.getElementById('descInput').value;
-
-         const response = await fetch(API_URL, {
-             method: 'POST',
-             headers: { 'Content-Type': 'application/json' },
-             body: JSON.stringify({ title, description, completed: false })
-         });
-
-         if (response.ok) {
-             document.getElementById('titleInput').value = '';
-             document.getElementById('descInput').value = '';
-             fetchTasks();
-         } else {
-             alert("Failed to save. Title must be at least 3 characters.");
-         }
-     }
-
-     async function deleteTask(id) {
-         if(confirm("Are you sure?")) {
-             await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-             fetchTasks();
-         }
-     }
-
-     async function toggleTask(id, title, description, currentStatus) {
-         await fetch(`${API_URL}/${id}`, {
-             method: 'PUT',
-             headers: { 'Content-Type': 'application/json' },
-             body: JSON.stringify({ title, description, completed: !currentStatus })
-         });
-         fetchTasks();
-     }
-
-     // --- 2. LOGICA DE FILTRARE ---
-
-function filterTasks(status, element) {
-    document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active-filter'));
-    element.classList.add('active-filter');
-
-    if (status === 'active') {
-        renderTasks(allTasks.filter(t => !t.completed));
-    } else if (status === 'completed') {
-        renderTasks(allTasks.filter(t => t.completed));
-    } else {
-        renderTasks(allTasks);
+    async function fetchTasks() {
+        try {
+            const response = await fetch(API_URL);
+            allTasks = await response.json();
+            renderTasks(allTasks);
+        } catch (error) {
+            console.error("Error fetching tasks:", error);
+        }
     }
+
+    async function createTask() {
+        const timeInterval = document.getElementById('timeInput').value;
+        const title = document.getElementById('titleInput').value;
+        const description = document.getElementById('descInput').value;
+        const category = document.getElementById('categoryInput').value;
+
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title,
+                description,
+                completed: false,
+                timeInterval,
+                category
+            })
+        });
+
+        if (response.ok) {
+            document.getElementById('timeInput').value = '';
+            document.getElementById('titleInput').value = '';
+            document.getElementById('descInput').value = '';
+            document.getElementById('categoryInput').value = '';
+            fetchTasks();
+        }
+    }
+
+    async function deleteTask(id) {
+        if(confirm("Are you sure?")) {
+            await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+            fetchTasks();
+        }
+    }
+
+    async function toggleTask(id, title, description, timeInterval, category, currentStatus) {
+        await fetch(`${API_URL}/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title,
+                description,
+                timeInterval,
+                category,
+                completed: !currentStatus
+            })
+        });
+        fetchTasks();
+    }
+
+    function filterTasks(status, element) {
+        document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active-filter'));
+        element.classList.add('active-filter');
+
+        if (status === 'active') {
+            renderTasks(allTasks.filter(t => !t.completed));
+        } else if (status === 'completed') {
+            renderTasks(allTasks.filter(t => t.completed));
+        } else {
+            renderTasks(allTasks);
+        }
+    }
+
+    function getCategoryStyle(category) {
+    const cat = (category || '').toUpperCase();
+    const styles = {
+        'DEEP WORK': { bg: '#d1edda', text: '#155724' }, // Verde
+        'BREAK':     { bg: '#fff3cd', text: '#856404' }, // Galben
+        'SPORT':     { bg: '#f8d7da', text: '#721c24' }, // Roșu
+        'SQL PRACTICE': { bg: '#e8daff', text: '#4527a0' }, // Mov
+        'DOCUMENTATION': { bg: '#e1f5fe', text: '#0288d1' } // Albastru
+    };
+
+    return styles[cat] || { bg: '#f1f2f6', text: '#2f3542' }; // Default gri dacă nu găsește
 }
 
-     // --- 3. DESENAREA PE ECRAN (UI) ---
-
-     function renderTasks(tasksToDisplay) {
-      // 1. Calcule de bază
+    function renderTasks(tasksToDisplay) {
     const total = allTasks.length;
     const completed = allTasks.filter(t => t.completed).length;
-    const remaining = total - completed; // Iată logica ta de Counter!
+    const remaining = total - completed;
     const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
     const stats = document.getElementById('stats');
@@ -208,9 +259,7 @@ function filterTasks(status, element) {
                     <span style="color: var(--primary);">${completed}/${total} Tasks</span>
                 </div>
                 <p style="margin: 5px 0 10px 0; font-size: 0.8rem; color: #636e72;">
-                    ${remaining === 0 && total > 0
-                        ? "🎉 All done! Take a break."
-                        : `You have <b>${remaining}</b> tasks left to do.`}
+                    ${remaining === 0 && total > 0 ? "🎉 All done!" : `<b>${remaining}</b> tasks left.`}
                 </p>
                 <div style="background: #e9ecef; border-radius: 10px; height: 8px; overflow: hidden;">
                     <div style="background: var(--success); width: ${percent}%; height: 100%; transition: width 0.5s;"></div>
@@ -219,36 +268,52 @@ function filterTasks(status, element) {
         `;
     }
 
-         // Desenăm lista propriu-zisă
-         const list = document.getElementById('taskList');
-         list.innerHTML = '';
+    tasksToDisplay.sort((a, b) => {
+        if (!a.timeInterval) return 1;
+        if (!b.timeInterval) return -1;
+        return a.timeInterval.localeCompare(b.timeInterval);
+    });
 
-         tasksToDisplay.forEach((task, index) => {
-             const div = document.createElement('div');
-             div.className = `card ${task.completed ? 'is-completed' : ''}`;
-             div.innerHTML = `
-                 <div class="task-header">
-                     <div>
-                         <span style="color: var(--primary); font-weight: bold;">#${index + 1}</span>
-                         <h3 class="${task.completed ? 'completed' : ''}" style="display: inline; margin-left: 10px;">${task.title}</h3>
-                         <p style="margin: 5px 0 0 35px; color: #636e72;">${task.description || 'No description'}</p>
-                     </div>
-                     <span style="font-size: 0.7rem; color: #b2bec3;">Ref: ${task.id}</span>
-                 </div>
-                 <div class="actions" style="margin-top: 15px; padding-left: 35px;">
-                     <button class="btn ${task.completed ? 'btn-undo' : 'btn-complete'}"
-                             onclick="toggleTask(${task.id}, '${task.title}', '${task.description}', ${task.completed})">
-                         ${task.completed ? 'Undo' : 'Done'}
-                     </button>
-                     <button class="btn btn-delete" onclick="deleteTask(${task.id})">Remove</button>
-                 </div>
-             `;
-             list.appendChild(div);
-         });
-     }
+    const list = document.getElementById('taskList');
+    list.innerHTML = '';
 
-     // Pornim aplicația
-     fetchTasks();
+    tasksToDisplay.forEach((task, index) => {
+        const style = getCategoryStyle(task.category);
+
+        const div = document.createElement('div');
+        div.className = `card ${task.completed ? 'is-completed' : ''}`;
+        div.style.position = 'relative';
+
+        div.innerHTML = `
+            <div class="task-header">
+                <div style="width: 100%;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="color: var(--primary); font-weight: bold;">#${index + 1}</span>
+                        <h3 class="${task.completed ? 'completed' : ''}" style="margin: 0;">${task.title}</h3>
+
+                        <span style="background: ${style.bg}; color: ${style.text}; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">
+                            ${task.category || 'General'}
+                        </span>
+                    </div>
+                    <p style="margin: 8px 0 0 32px; color: #636e72;">${task.description || 'No description'}</p>
+                </div>
+                <div style="position: absolute; top: 20px; right: 20px; font-size: 0.8rem; font-weight: bold; color: #b2bec3;">
+                    ${task.timeInterval || '--:--'}
+                </div>
+            </div>
+            <div class="actions" style="margin-top: 15px; padding-left: 32px;">
+                <button class="btn ${task.completed ? 'btn-undo' : 'btn-complete'}"
+                        onclick="toggleTask(${task.id}, '${task.title}', '${task.description}', '${task.timeInterval}', '${task.category}', ${task.completed})">
+                    ${task.completed ? 'Undo' : 'Done'}
+                </button>
+                <button class="btn btn-delete" onclick="deleteTask(${task.id})">Remove</button>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+    fetchTasks();
 </script>
 
 </body>
