@@ -39,10 +39,10 @@
     }
 
     async function deleteTask(id) {
-        if(confirm("Are you sure?")) {
-            await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-            fetchTasks();
-        }
+            showModal(async () => {
+                await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                fetchTasks();
+            });
     }
 
     async function toggleTask(id, title, description, timeInterval, category, currentStatus) {
@@ -89,14 +89,12 @@
     function searchTasks() {
         const query = document.getElementById('searchInput').value.toLowerCase();
 
-        // Filtrăm lista existentă în memorie
         const filtered = allTasks.filter(task => {
             const titleMatch = task.title.toLowerCase().includes(query);
             const descMatch = (task.description || "").toLowerCase().includes(query);
             return titleMatch || descMatch;
         });
 
-        // Re-randăm lista doar cu elementele găsite
         renderTasks(filtered);
     }
 
@@ -124,6 +122,37 @@
         }
 
         statsContainer.innerHTML = html;
+    }
+
+    function isTaskCurrent(timeInterval) {
+        if (!timeInterval || !timeInterval.includes('-')) return false;
+
+        const now = new Date();
+        const currentTimeInMinutes = now.getHours() * 60 + now.getMinutes();
+
+        const parts = timeInterval.split('-');
+        const startTimePart = parts[0].trim();
+        const endTimePart = parts[1].trim();
+
+        const [startHour, startMin] = startTimePart.split(':').map(Number);
+        const [endHour, endMin] = endTimePart.split(':').map(Number);
+
+        const startTimeInMinutes = startHour * 60 + startMin;
+        const endTimeInMinutes = endHour * 60 + endMin;
+
+        return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
+    }
+
+    async function clearCompleted() {
+        const completedTasks = allTasks.filter(t => t.completed);
+            if (completedTasks.length === 0) return;
+
+            showModal(async () => {
+                await Promise.all(completedTasks.map(task =>
+                    fetch(`${API_URL}/${task.id}`, { method: 'DELETE' })
+                ));
+                fetchTasks();
+            });
     }
 
     function renderTasks(tasksToDisplay) {
@@ -162,8 +191,10 @@
     tasksToDisplay.forEach((task, index) => {
         const style = getCategoryStyle(task.category);
 
+        const currentClass = (task.timeInterval && isTaskCurrent(task.timeInterval)) ? 'current-task' : '';
+
         const div = document.createElement('div');
-        div.className = `card ${task.completed ? 'is-completed' : ''}`;
+        div.className = `card ${task.completed ? 'is-completed' : ''} ${currentClass}`;
         div.style.position = 'relative';
 
         div.innerHTML = `
@@ -196,4 +227,28 @@
     updateCategoryStats();
 }
 
+    let actionToConfirm = null;
+
+    function showModal(callback) {
+        actionToConfirm = callback;
+        document.getElementById('customModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('customModal').style.display = 'none';
+    }
+
+    // Setăm evenimentul de confirmare
+    document.getElementById('confirmBtn').onclick = async () => {
+        if (actionToConfirm) {
+            await actionToConfirm();
+        }
+        closeModal();
+    };
+
     fetchTasks();
+
+    setInterval(() => {
+        console.log("Auto-refreshing current task highlight...");
+        renderTasks(allTasks);
+    }, 60000); // Rulează la fiecare 60 de secunde

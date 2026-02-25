@@ -100,6 +100,41 @@
             border-color: var(--primary);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
+
+        .btn-clear {
+            background: rgba(45, 106, 79, 0.15); /* Verdele tău primary, dar foarte transparent */
+            color: #b2f2bb; /* Un verde foarte deschis, aproape alb */
+            border: 1px solid #52b788; /* Bordură cu culoarea succesului */
+            margin-top: 15px;
+            width: 100%;
+            backdrop-filter: blur(4px);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-clear:hover {
+            background: #52b788; /* Se umple complet cu verde la hover */
+            color: white;
+            box-shadow: 0 0 20px rgba(82, 183, 136, 0.4);
+            transform: scale(1.02);
+        }
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(82, 183, 136, 0.7); } /* Folosim verdele --success */
+            70% { box-shadow: 0 0 0 15px rgba(82, 183, 136, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(82, 183, 136, 0); }
+        }
+
+        .current-task {
+            /* Schimbăm border-ul să fie mai evident (verde deschis) */
+            border: 3px solid var(--success) !important;
+            animation: pulse-border 2s infinite !important;
+            transform: scale(1.03); /* Îl facem un pic mai mare să iasă în evidență */
+            z-index: 10;
+            position: relative;
+        }
     </style>
 
 </head>
@@ -152,6 +187,9 @@
                 <button class="btn-filter active-filter" onclick="filterTasks('all', this)">All Tasks</button>
                 <button class="btn-filter" onclick="filterTasks('active', this)">To Do</button>
                 <button class="btn-filter" onclick="filterTasks('completed', this)">Finished</button>
+                <button class="btn btn-clear" onclick="clearCompleted()">
+                    🗑️ Clear Finished Tasks
+                </button>
             </div>
 
             <div class="card" id="categoryStats" style="border-left: 5px solid var(--success); margin-top: 20px; padding: 15px; font-size: 0.85rem;">
@@ -169,6 +207,17 @@
         </div>
     </div>
 </div>
+</div>
+
+<div id="customModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; backdrop-filter: blur(5px);">
+    <div class="card" style="max-width:400px; text-align:center; border-left: 5px solid var(--danger);">
+        <h3 style="margin-top:0;">Are you sure?</h3>
+        <p>This action will permanently delete the selected tasks.</p>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="btn" onclick="closeModal()" style="flex:1; background:#636e72; color:white;">Cancel</button>
+            <button id="confirmBtn" class="btn btn-delete" style="flex:1;">Yes, delete them</button>
+        </div>
+    </div>
 </div>
 
 <script src="script.js"></script>
