@@ -6,7 +6,7 @@
     <title>Task Manager Pro</title>
     <style>
         :root {
-            --primary: #2d6a4f; /* Un verde închis, liniștitor */
+            --primary: #2d6a4f;
             --success: #52b788;
             --danger: #e74c3c;
             --bg: #1b4332;
@@ -26,19 +26,23 @@
 
         .container { max-width: 1100px; margin: auto; }
 
-
         .card {
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(12px);
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 12px;
-            border-left: 5px solid var(--primary);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            transition: transform 0.2s;
+           background: rgba(255, 255, 255, 0.98); /* Mai puțin transparent pentru lizibilitate maximă */
+           backdrop-filter: blur(15px);
+           padding: 25px; /* Puțin mai mult spațiu interior */
+           margin-bottom: 25px;
+           border-radius: 16px; /* Colțuri mai rotunjite, mai moderne */
+           border: 1px solid rgba(255, 255, 255, 0.3); /* O bordură fină de sticlă */
+           border-left: 6px solid var(--primary); /* Bordura laterală un pic mai groasă */
+           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12); /* Umbră mai difuză și mai naturală */
+           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Animație mai fină */
         }
 
-        .card:hover { transform: translateY(-3px); }
+
+        .card:hover {
+         transform: translateY(-5px); /* Se ridică un pic mai mult la hover */
+         box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        }
 
         h1 {
             color: white;
@@ -53,25 +57,33 @@
 
         .card.is-completed { border-left-color: var(--success); }
 
-        input, select {
+        input, select, textarea {
             width: 100%; padding: 12px; margin: 0;
             border: 2px solid #eee; border-radius: 8px; outline: none;
             transition: border-color 0.3s; box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.8);
+            font-family: inherit;
         }
 
-        input:focus, select:focus { border-color: var(--primary); }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            background: white;
+        }
 
         .btn {
             padding: 10px 20px; border-radius: 8px; border: none;
             font-weight: 600; cursor: pointer; transition: 0.3s;
         }
 
-        .btn-save { background: var(--primary); color: white; width: 100%; }
+        .btn-save {
+            background: var(--primary); color: white; width: 100%;
+            letter-spacing: 1px; text-transform: uppercase;
+        }
+
         .btn-complete { background: var(--success); color: white; margin-right: 10px; }
         .btn-undo { background: #636e72; color: white; margin-right: 10px; }
         .btn-delete { background: var(--danger); color: white; }
         .btn:hover { opacity: 0.85; transform: scale(0.98); }
-
 
         .btn-filter {
            background: rgba(255, 255, 255, 0.1);
@@ -80,9 +92,8 @@
            border-radius: 10px;
            cursor: pointer;
            font-weight: 600;
-           color: white; /* Acum textul este alb să se vadă pe verde */
+           color: white;
            text-align: left;
-           padding-left: 30px;
            display: block;
            transition: all 0.3s;
            width: 100%;
@@ -90,123 +101,128 @@
            margin-bottom: 8px;
         }
 
-        .btn-filter:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
         .btn-filter.active-filter {
             background: var(--primary);
-            color: white;
-            border-color: var(--primary);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
 
         .btn-clear {
-            background: rgba(45, 106, 79, 0.15); /* Verdele tău primary, dar foarte transparent */
-            color: #b2f2bb; /* Un verde foarte deschis, aproape alb */
-            border: 1px solid #52b788; /* Bordură cu culoarea succesului */
+            background: rgba(45, 106, 79, 0.15);
+            color: #b2f2bb;
+            border: 1px solid #52b788;
             margin-top: 15px;
             width: 100%;
-            backdrop-filter: blur(4px);
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn-clear:hover {
-            background: #52b788; /* Se umple complet cu verde la hover */
-            color: white;
-            box-shadow: 0 0 20px rgba(82, 183, 136, 0.4);
-            transform: scale(1.02);
         }
 
         @keyframes pulse-border {
-            0% { box-shadow: 0 0 0 0 rgba(82, 183, 136, 0.7); } /* Folosim verdele --success */
+            0% { box-shadow: 0 0 0 0 rgba(82, 183, 136, 0.7); }
             70% { box-shadow: 0 0 0 15px rgba(82, 183, 136, 0); }
             100% { box-shadow: 0 0 0 0 rgba(82, 183, 136, 0); }
         }
 
         .current-task {
-            /* Schimbăm border-ul să fie mai evident (verde deschis) */
             border: 3px solid var(--success) !important;
             animation: pulse-border 2s infinite !important;
-            transform: scale(1.03); /* Îl facem un pic mai mare să iasă în evidență */
+            transform: scale(1.02);
             z-index: 10;
-            position: relative;
+        }
+
+        .task-description {
+           color: #2d3436;
+           line-height: 1.6;
+           font-size: 0.9rem;
+           transition: max-height 0.3s ease-in-out;
+           overflow: hidden; /* Asta va tăia textul care depășește limita */
+           position: relative;
+        }
+
+        .task-description.collapsed { max-height: 4.8em;  margin-bottom: 5px; }
+        .task-description.expanded { max-height: 1000px; margin-bottom: 10px; }
+
+        .btn-read-more {
+            display: block; /* Îl forțăm să stea pe rândul lui, sub text */
+            background: rgba(45, 106, 79, 0.08);
+            color: var(--primary);
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: fit-content; /* Se strânge cât e textul */
+            margin-top: 5px;
         }
     </style>
-
 </head>
 <body>
 
 <div class="container">
     <h1>Task Manager</h1>
 
-    <div class="card" style="display: flex; gap: 15px; align-items: center; padding: 15px; border-left: 5px solid var(--primary); margin-bottom: 40px;">
-        <select id="timeInput" style="flex: 1; padding: 12px; border-radius: 8px; border: 2px solid #eee;">
-            <option value="">Select Time</option>
-            <option value="08:00 - 09:30">08:00 - 09:30</option>
-            <option value="09:30 - 11:00">09:30 - 11:00</option>
-            <option value="11:00 - 12:30">11:00 - 12:30</option>
+    <div class="card" style="padding: 25px; border-left: 5px solid var(--primary); margin-bottom: 40px; background: rgba(255, 255, 255, 0.95);">
+        <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center;">
+            <select id="timeInput" style="flex: 1.2; border: 1px solid #ddd;">
+                <option value="">Select Time</option>
+                <option value="08:00 - 09:30">08:00 - 09:30</option>
+                <option value="09:30 - 11:00">09:30 - 11:00</option>
+                <option value="11:00 - 12:30">11:00 - 12:30</option>
+                <option value="12:30 - 14:00">12:30 - 14:00</option>
+                <option value="14:00 - 15:30">14:00 - 15:30</option>
+                <option value="15:30 - 17:00">15:30 - 17:00</option>
+                <option value="17:00 - 18:30">17:00 - 18:30</option>
+                <option value="19:00 - 20:30">19:00 - 20:30</option>
+                <option value="20:30 - 22:00">20:30 - 22:00</option>
+            </select>
 
-            <option value="12:30 - 14:00">12:30 - 14:00</option>
+            <input id="titleInput" placeholder="What's the main focus?" style="flex: 2.5; border: 1px solid #ddd;" type="text">
 
-            <option value="14:00 - 15:30">14:00 - 15:30</option>
-            <option value="15:30 - 17:00">15:30 - 17:00</option>
-            <option value="17:00 - 18:30">17:00 - 18:30</option>
+            <select id="categoryInput" style="flex: 1.2; border: 1px solid #ddd;">
+                <option value="">Category</option>
+                <option value="DEEP WORK">DEEP WORK</option>
+                <option value="BREAK">BREAK</option>
+                <option value="SPORT">SPORT</option>
+                <option value="SQL PRACTICE">SQL PRACTICE</option>
+                <option value="DOCUMENTATION">DOCUMENTATION</option>
+            </select>
+        </div>
 
-            <option value="19:00 - 20:30">19:00 - 20:30</option>
-            <option value="20:30 - 22:00">20:30 - 22:00</option>
-        </select>
+        <div style="margin-bottom: 20px;">
+        <textarea id="descInput" placeholder="Detailed notes (steps, links, sub-tasks)..."
+                  style="width: 100%; min-height: 100px; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
+        </div>
 
-        <input id="titleInput" placeholder="Task Title..." style="flex: 2;" type="text">
-        <input id="descInput" placeholder="Description..." style="flex: 2;" type="text">
-
-        <select id="categoryInput" style="flex: 1; padding: 12px; border-radius: 8px; border: 2px solid #eee;">
-            <option value="">Category</option>
-            <option value="DEEP WORK">DEEP WORK</option>
-            <option value="BREAK">BREAK</option>
-            <option value="SPORT">SPORT</option>
-            <option value="SQL PRACTICE">SQL PRACTICE</option>
-            <option value="DOCUMENTATION">DOCUMENTATION</option>
-        </select>
-
-        <button class="btn btn-save" onclick="createTask()" style="width: auto; padding: 12px 30px; white-space: nowrap;">
-            Add Task
-        </button>
-
+        <div style="display: flex; justify-content: flex-end;">
+            <button class="btn btn-save" onclick="createTask()" style="width: auto; padding: 12px 40px; border-radius: 30px; box-shadow: 0 4px 15px rgba(45, 106, 79, 0.2);">
+                + Add Task
+            </button>
+        </div>
     </div>
-    <div style="display: flex; gap: 30px; align-items: flex-start;">
 
+    <div style="display: flex; gap: 30px; align-items: flex-start;">
         <div style="flex: 1; position: sticky; top: 40px;">
-            <div class="card" id="stats" style="border-left: 5px solid #636e72; padding: 15px; margin-bottom: 20px;">
-            </div>
+            <div class="card" id="stats" style="border-left: 5px solid #636e72; padding: 15px; margin-bottom: 20px;"></div>
 
             <div style="display: flex; flex-direction: column; gap: 10px;">
                 <button class="btn-filter active-filter" onclick="filterTasks('all', this)">All Tasks</button>
                 <button class="btn-filter" onclick="filterTasks('active', this)">To Do</button>
                 <button class="btn-filter" onclick="filterTasks('completed', this)">Finished</button>
-                <button class="btn btn-clear" onclick="clearCompleted()">
-                    🗑️ Clear Finished Tasks
-                </button>
+                <button class="btn btn-clear" onclick="clearCompleted()">🗑️ Clear Finished</button>
             </div>
 
-            <div class="card" id="categoryStats" style="border-left: 5px solid var(--success); margin-top: 20px; padding: 15px; font-size: 0.85rem;">
-            </div>
+            <div class="card" id="categoryStats" style="border-left: 5px solid var(--success); margin-top: 20px; padding: 15px; font-size: 0.85rem;"></div>
         </div>
 
         <div style="flex: 3;">
             <div class="card" style="border-left-color: #636e72; margin-bottom: 20px; padding: 10px 15px;">
-                <input type="text" id="searchInput" onkeyup="searchTasks()"
+                <input type="text" id="searchInput" oninput="searchTasks()"
                        placeholder="🔍 Search tasks by title or description..."
                        style="background: rgba(255,255,255,0.7); border: 1px solid #ddd; width: 100%;">
             </div>
-
-        <div id="taskList">
+            <div id="taskList"></div>
         </div>
     </div>
-</div>
 </div>
 
 <div id="customModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; backdrop-filter: blur(5px);">

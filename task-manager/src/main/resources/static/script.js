@@ -45,19 +45,27 @@
             });
     }
 
-    async function toggleTask(id, title, description, timeInterval, category, currentStatus) {
-        await fetch(`${API_URL}/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                title,
-                description,
-                timeInterval,
-                category,
-                completed: !currentStatus
-            })
-        });
-        fetchTasks();
+    async function toggleTask(id, currentStatus) {
+        // 1. Găsim task-ul complet în lista locală după ID
+        const task = allTasks.find(t => t.id === id);
+        if (!task) return;
+
+        try {
+            // 2. Trimitem la server obiectul complet, dar cu statusul inversat
+            await fetch(`${API_URL}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...task,                // Copiază titlu, descriere, categorie, interval orar
+                    completed: !currentStatus // Inversează statusul
+                })
+            });
+
+            // 3. Reîmprospătăm lista de la server
+            fetchTasks();
+        } catch (error) {
+            console.error("Nu s-a putut actualiza task-ul:", error);
+        }
     }
 
     function filterTasks(status, element) {
@@ -87,12 +95,20 @@
 }
 
     function searchTasks() {
-        const query = document.getElementById('searchInput').value.toLowerCase();
+        const query = document.getElementById('searchInput').value.toLowerCase().trim();
+
+        // Dacă search-ul e gol, afișăm toate task-urile
+        if (query === "") {
+            renderTasks(allTasks);
+            return;
+        }
 
         const filtered = allTasks.filter(task => {
-            const titleMatch = task.title.toLowerCase().includes(query);
+            const titleMatch = (task.title || "").toLowerCase().includes(query);
             const descMatch = (task.description || "").toLowerCase().includes(query);
-            return titleMatch || descMatch;
+            const catMatch = (task.category || "").toLowerCase().includes(query);
+
+            return titleMatch || descMatch || catMatch;
         });
 
         renderTasks(filtered);
@@ -155,6 +171,21 @@
             });
     }
 
+    function toggleDescription(taskId) {
+        const descElement = document.getElementById(`desc-${taskId}`);
+        const btnElement = descElement.nextElementSibling; // Butonul este fix după div
+
+        if (descElement.classList.contains('collapsed')) {
+            descElement.classList.remove('collapsed');
+            descElement.classList.add('expanded');
+            btnElement.innerText = 'Show Less';
+        } else {
+            descElement.classList.remove('expanded');
+            descElement.classList.add('collapsed');
+            btnElement.innerText = 'Read More';
+        }
+    }
+
     function renderTasks(tasksToDisplay) {
     const total = allTasks.length;
     const completed = allTasks.filter(t => t.completed).length;
@@ -189,41 +220,50 @@
     list.innerHTML = '';
 
     tasksToDisplay.forEach((task, index) => {
-        const style = getCategoryStyle(task.category);
+             const style = getCategoryStyle(task.category);
+             const currentClass = (task.timeInterval && isTaskCurrent(task.timeInterval)) ? 'current-task' : '';
 
-        const currentClass = (task.timeInterval && isTaskCurrent(task.timeInterval)) ? 'current-task' : '';
+             // Procesăm liniile pentru a vedea dacă avem nevoie de "Read More"
+             const descriptionLines = (task.description || '').split('\n').filter(line => line.trim() !== '');
+             const formattedDescription = descriptionLines.map(line => `• ${line}`).join('<br>');
+             const hasMore = descriptionLines.length > 3;
 
-        const div = document.createElement('div');
-        div.className = `card ${task.completed ? 'is-completed' : ''} ${currentClass}`;
-        div.style.position = 'relative';
+             const div = document.createElement('div');
+             div.className = `card ${task.completed ? 'is-completed' : ''} ${currentClass}`;
+             div.style.position = 'relative';
 
-        div.innerHTML = `
-            <div class="task-header">
-                <div style="width: 100%;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="color: var(--primary); font-weight: bold;">#${index + 1}</span>
-                        <h3 class="${task.completed ? 'completed' : ''}" style="margin: 0;">${task.title}</h3>
+             div.innerHTML = `
+                 <div class="task-header">
+                     <div style="width: 100%;">
+                         <div style="display: flex; align-items: center; gap: 10px;">
+                             <span style="color: var(--primary); font-weight: bold;">#${index + 1}</span>
+                             <h3 class="${task.completed ? 'completed' : ''}" style="margin: 0;">${task.title}</h3>
+                             <span style="background: ${style.bg}; color: ${style.text}; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">
+                                 ${task.category || 'General'}
+                             </span>
+                         </div>
+                         <div style="margin: 12px 0 0 32px; display: flex; flex-direction: column;">
+                             <div id="desc-${task.id}" class="task-description collapsed">
+                                 ${formattedDescription || 'No description provided.'}
+                             </div>
+                             ${hasMore ? `<button class="btn-read-more" onclick="toggleDescription(${task.id})">Read More</button>` : ''}
+                         </div>
+                     </div>
+                     <div style="position: absolute; top: 20px; right: 20px; font-size: 0.8rem; font-weight: bold; color: #b2bec3;">
+                         ${task.timeInterval || '--:--'}
+                     </div>
+                 </div>
+                 <div class="actions" style="margin-top: 15px; padding-left: 32px;">
+                     <button class="btn ${task.completed ? 'btn-undo' : 'btn-complete'}"
+                             onclick="toggleTask(${task.id}, ${task.completed})">
+                         ${task.completed ? 'Undo' : 'Done'}
+                     </button>
+                     <button class="btn btn-delete" onclick="deleteTask(${task.id})">Remove</button>
+                 </div>
+             `;
+             list.appendChild(div);
+         });
 
-                        <span style="background: ${style.bg}; color: ${style.text}; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">
-                            ${task.category || 'General'}
-                        </span>
-                    </div>
-                    <p style="margin: 8px 0 0 32px; color: #636e72;">${task.description || 'No description'}</p>
-                </div>
-                <div style="position: absolute; top: 20px; right: 20px; font-size: 0.8rem; font-weight: bold; color: #b2bec3;">
-                    ${task.timeInterval || '--:--'}
-                </div>
-            </div>
-            <div class="actions" style="margin-top: 15px; padding-left: 32px;">
-                <button class="btn ${task.completed ? 'btn-undo' : 'btn-complete'}"
-                        onclick="toggleTask(${task.id}, '${task.title}', '${task.description}', '${task.timeInterval}', '${task.category}', ${task.completed})">
-                    ${task.completed ? 'Undo' : 'Done'}
-                </button>
-                <button class="btn btn-delete" onclick="deleteTask(${task.id})">Remove</button>
-            </div>
-        `;
-        list.appendChild(div);
-    });
     updateCategoryStats();
 }
 
@@ -252,3 +292,7 @@
         console.log("Auto-refreshing current task highlight...");
         renderTasks(allTasks);
     }, 60000); // Rulează la fiecare 60 de secunde
+
+    window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeModal();
+    });
