@@ -24,6 +24,7 @@ public class Task {
 
     private String timeInterval;
     private String category;
+    private String priority = "LOW";
 
     public Task() {}
 
@@ -41,6 +42,9 @@ public class Task {
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+
+    public String getPriority() {return  priority;}
+    public void setPriority(String priority) {this.priority = priority; }
 
     public Long getId() { return id; }
 
