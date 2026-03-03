@@ -1,6 +1,7 @@
 package com.robert.task_manager;
 
 import com.robert.task_manager.service.TaskService;
+import dto.TaskDTO;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -8,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,14 +21,14 @@ public class TaskController {
     private TaskService taskService;
 
     @GetMapping
-    public List<Task> getAllTask() {
-        return taskService.getAllTask();
+    public List<TaskDTO> getAllTask() {
+        return taskService.getAllTasksDTO();
     }
 
     @PostMapping
-    public ResponseEntity<Task> createTask(@Valid @RequestBody Task task) {
-        Task savedTask = taskService.saveTask(task);
-        return new ResponseEntity<>(savedTask, HttpStatus.CREATED);
+    public ResponseEntity<TaskDTO> createTask(@Valid @RequestBody TaskDTO taskDTO) {
+        TaskDTO savedTaskDTO = taskService.saveTaskDTO(taskDTO);
+        return new ResponseEntity<>(savedTaskDTO, HttpStatus.CREATED);
     }
 
     @DeleteMapping("/{id}")
@@ -37,13 +37,20 @@ public class TaskController {
     }
 
     @GetMapping("/{id}")
-    public Task getTaskById(@PathVariable Long id) {
-        return taskService.getTaskById(id);
+    public ResponseEntity<TaskDTO> getTaskById(@PathVariable Long id) {
+        TaskDTO taskDTO = taskService.getTaskByIdDTO(id);
+        return new ResponseEntity<>(taskDTO, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
-    public Task updateTask(@Valid @PathVariable Long id, @RequestBody Task taskDetails){
-        return taskService.updateTask(id, taskDetails);
+    public ResponseEntity<TaskDTO> updateTask(@Valid @PathVariable Long id, @RequestBody TaskDTO taskdetailsDTO){
+        TaskDTO updateTask = taskService.updateTask(id, taskdetailsDTO);
+        return new ResponseEntity<>(updateTask, HttpStatus.OK);
+    }
+
+    @GetMapping("/filter")
+    public List<TaskDTO> getTasksByPriority(@RequestParam String priority) {
+        return taskService.getTasksByPriority(priority);
     }
 }
 
