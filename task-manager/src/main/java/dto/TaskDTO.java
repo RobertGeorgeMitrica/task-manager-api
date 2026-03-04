@@ -2,6 +2,8 @@ package dto;
 
 import lombok.Data;
 
+import java.time.LocalDate;
+
 @Data
 public class TaskDTO {
     private Long id;
@@ -11,6 +13,15 @@ public class TaskDTO {
     private String timeInterval;
     private String category;
     private String priority;
+    private LocalDate dueDate;
+
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
+    }
 
     public Long getId() {
         return id;

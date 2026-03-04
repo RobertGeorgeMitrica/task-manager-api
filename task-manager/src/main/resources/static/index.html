@@ -172,6 +172,18 @@
             50% { opacity: 0.6; }
             100% { opacity: 1; }
         }
+
+        #calendarFilter {
+            cursor: pointer;
+            font-family: inherit;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        #calendarFilter::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            filter: invert(30%) sepia(20%) saturate(1000%) hue-rotate(110deg);
+        }
     </style>
 </head>
 <body>
@@ -210,6 +222,11 @@
                 <option value="MEDIUM">Medium Priority</option>
                 <option value="HIGH">High Priority</option>
             </select>
+
+            <div style="flex: 1.2;">
+                <input type="date" id="dateInput" style="border: 1px solid #ddd; height: 100%;">
+            </div>
+
         </div>
 
         <div style="margin-bottom: 20px;">
@@ -224,28 +241,45 @@
         </div>
     </div>
 
-    <div style="display: flex; gap: 30px; align-items: flex-start;">
+    <div style="display: flex; gap: 20px; align-items: flex-start;">
+
         <div style="flex: 1; position: sticky; top: 40px;">
             <div class="card" id="stats" style="border-left: 5px solid #636e72; padding: 15px; margin-bottom: 20px;"></div>
-
             <div style="display: flex; flex-direction: column; gap: 10px;">
                 <button class="btn-filter active-filter" onclick="filterTasks('all', this)">All Tasks</button>
                 <button class="btn-filter" onclick="filterTasks('active', this)">To Do</button>
                 <button class="btn-filter" onclick="filterTasks('completed', this)">Finished</button>
                 <button class="btn btn-clear" onclick="clearCompleted()">🗑️ Clear Finished</button>
             </div>
-
             <div class="card" id="categoryStats" style="border-left: 5px solid var(--success); margin-top: 20px; padding: 15px; font-size: 0.85rem;"></div>
         </div>
 
-        <div style="flex: 3;">
+        <div style="flex: 2.5;">
             <div class="card" style="border-left-color: #636e72; margin-bottom: 20px; padding: 10px 15px;">
                 <input type="text" id="searchInput" oninput="searchTasks()"
-                       placeholder="🔍 Search tasks by title or description..."
+                       placeholder="🔍 Search tasks..."
                        style="background: rgba(255,255,255,0.7); border: 1px solid #ddd; width: 100%;">
             </div>
             <div id="taskList"></div>
         </div>
+
+        <div style="flex: 1; position: sticky; top: 40px;">
+            <div class="card" style="border-left: 5px solid var(--primary); padding: 15px; background: rgba(255, 255, 255, 0.95);">
+                <label style="color: #2d3436; font-weight: bold; font-size: 0.85rem; margin-bottom: 12px; display: block; text-align: center;">
+                    📅 NAVIGATE BY DATE
+                </label>
+                <input type="date" id="calendarFilter" onchange="filterByAnyDate()"
+                       style="border: 2px solid var(--primary); padding: 10px; border-radius: 8px; width: 100%;">
+                <p style="font-size: 0.7rem; color: #636e72; margin-top: 10px; text-align: center;">
+                    Select a date to see scheduled tasks.
+                </p>
+                <button class="btn-filter" style="margin-top: 15px; width: 100%; text-align: center; background: var(--primary); color: white;"
+                        onclick="fetchTasks(); document.getElementById('calendarFilter').value=''">
+                    Reset to All
+                </button>
+            </div>
+        </div>
+
     </div>
 </div>
 

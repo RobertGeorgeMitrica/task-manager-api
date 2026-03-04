@@ -7,6 +7,7 @@ import dto.TaskDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -43,6 +44,7 @@ public class TaskService {
         task.setTimeInterval(taskDetailsDTO.getTimeInterval());
         task.setCategory(taskDetailsDTO.getCategory());
         task.setPriority(taskDetailsDTO.getPriority());
+        task.setDueDate(taskDetailsDTO.getDueDate());
 
         Task updatedTask = taskRepository.save(task);
         return convertToDTO(updatedTask);
@@ -64,18 +66,20 @@ public class TaskService {
         dto.setTimeInterval(task.getTimeInterval());
         dto.setCategory(task.getCategory());
         dto.setPriority(task.getPriority());
+        dto.setDueDate(task.getDueDate());
         return dto;
     }
 
     private Task convertToEntity(TaskDTO dto) {
         Task task = new Task();
-        // Nu setăm ID-ul pentru un Task nou, baza de date îl va genera
+
         task.setTitle(dto.getTitle());
         task.setDescription(dto.getDescription());
         task.setCompleted(dto.isCompleted());
         task.setTimeInterval(dto.getTimeInterval());
         task.setCategory(dto.getCategory());
         task.setPriority(dto.getPriority());
+        task.setDueDate(dto.getDueDate());
         return task;
     }
 
@@ -88,6 +92,13 @@ public class TaskService {
 
     public List<TaskDTO> getTasksByPriority(String priority) {
         return taskRepository.findByPriority(priority)
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<TaskDTO> getTaskByDueDate(LocalDate date) {
+        return taskRepository.findByDueDate(date)
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());

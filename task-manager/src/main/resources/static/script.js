@@ -18,29 +18,44 @@ async function fetchTasks() {
 }
 
 async function createTask() {
+    // 1. Colectăm toate valorile din input-uri
     const timeInterval = document.getElementById('timeInput').value;
     const title = document.getElementById('titleInput').value.trim();
+    const description = document.getElementById('descInput').value;
+    const priority = document.getElementById('priorityInput').value;
+    const category = document.getElementById('categoryInput').value;
 
+    // ATENȚIE: Folosim id-ul 'dateInput' pe care l-am pus în HTML
+    const dueDate = document.getElementById('dateInput').value;
+
+    // 2. Validare minimă
     if (title.length < 3) {
         alert("Title must be at least 3 characters long!");
         return;
     }
 
-    const description = document.getElementById('descInput').value;
-    const priority = document.getElementById('priorityInput').value;
-    const category = document.getElementById('categoryInput').value;
+    // 3. Trimitem UN SINGUR fetch cu toate datele
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title,
+                description,
+                completed: false,
+                timeInterval,
+                category,
+                priority,
+                dueDate // Aici pleacă data către Backend-ul tău Java
+            })
+        });
 
-    const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            title, description, completed: false, timeInterval, category, priority
-        })
-    });
-
-    if (response.ok) {
-        resetForm();
-        fetchTasks();
+        if (response.ok) {
+            resetForm(); // Curățăm câmpurile
+            fetchTasks(); // Reîmprospătăm lista
+        }
+    } catch (error) {
+        console.error("Error creating task:", error);
     }
 }
 
@@ -57,6 +72,28 @@ async function toggleTask(id, currentStatus) {
         fetchTasks();
     } catch (error) {
         console.error("Toggle error:", error);
+    }
+}
+
+async function filterByAnyDate() {
+    const selectedDate = document.getElementById('calendarFilter').value;
+    if (!selectedDate) {
+        fetchTasks(); // Dacă șterge data, arătăm tot
+        return;
+    }
+
+    // Curățăm stilul butoanelor din stânga
+    document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active-filter'));
+
+    try {
+        const response = await fetch(`${API_URL}/date?date=${selectedDate}`);
+        if (response.ok) {
+            const filteredTasks = await response.json();
+            // IMPORTANT: Nu suprascriem allTasks aici, doar afișăm rezultatul
+            renderTasks(filteredTasks);
+        }
+    } catch (error) {
+        console.error("Filtering error:", error);
     }
 }
 
@@ -85,13 +122,21 @@ async function clearCompleted() {
 function renderTasks(tasksToDisplay) {
     renderStats();
 
-    tasksToDisplay.sort((a, b) => (a.timeInterval || "").localeCompare(b.timeInterval || ""));
+    tasksToDisplay.sort((a, b) => {
+            const dateA = a.dueDate || "9999-12-31"; // Task-urile fără dată merg la final
+            const dateB = b.dueDate || "9999-12-31";
+
+            if (dateA !== dateB) { return dateA.localeCompare(dateB); }
+            return (a.timeInterval || "").localeCompare(b.timeInterval || "");
+        });
 
     const list = document.getElementById('taskList');
+    const todayStr = new Date().toISOString().split('T')[0];
     list.innerHTML = '';
 
     tasksToDisplay.forEach((task, index) => {
         const style = getCategoryStyle(task.category);
+        const isToday = task.dueDate === todayStr;
         const isCurrent = (task.timeInterval && isTaskCurrent(task.timeInterval)) ? 'current-task' : '';
 
         const descriptionLines = (task.description || '').split('\n').filter(line => line.trim() !== '');
@@ -101,7 +146,13 @@ function renderTasks(tasksToDisplay) {
         const priorityColors = { 'HIGH': '#ff7675', 'MEDIUM': '#fdcb6e', 'LOW': '#55efc4' };
 
         const div = document.createElement('div');
-        div.className = `card ${task.completed ? 'is-completed' : ''} ${isCurrent}`;
+        div.className = `card ${task.completed ? 'is-completed' : ''} ${isCurrent} ${isToday ? 'today-highlight' : ''}`;
+
+        if (isToday && !task.completed) {
+                div.style.borderTop = "3px solid #f1c40f"; // O dungă aurie sus
+                div.style.backgroundColor = "rgba(241, 196, 15, 0.05)";
+        }
+
         div.style.borderLeft = `6px solid ${priorityColors[task.priority] || '#55efc4'}`;
 
         div.innerHTML = `
@@ -121,9 +172,13 @@ function renderTasks(tasksToDisplay) {
                         ${hasMore ? `<button class="btn-read-more" onclick="toggleDescription(${task.id})">Read More</button>` : ''}
                     </div>
                 </div>
+
                 <div style="text-align: right; min-width: 100px;">
                     <div style="font-size: 0.8rem; font-weight: bold; color: #b2bec3;">
                         ${task.timeInterval || '--:--'}
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--primary); margin-top: 4px; font-weight: 600;">
+                        📅 ${task.dueDate ? task.dueDate : 'No date'}
                     </div>
                     ${getTimeUntil(task.timeInterval)}
                 </div>
@@ -231,7 +286,7 @@ function getTimeUntil(timeInterval) {
 }
 
 function resetForm() {
-    ['timeInput', 'titleInput', 'descInput', 'categoryInput', 'priorityInput'].forEach(id => {
+    ['timeInput', 'titleInput', 'descInput', 'categoryInput', 'priorityInput' , 'dateInput'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.value = '';
     });

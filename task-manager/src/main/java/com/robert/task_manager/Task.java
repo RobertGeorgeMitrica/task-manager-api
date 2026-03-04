@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDate;
+
 
 @Entity
 @Table(name = "task")
@@ -25,6 +27,8 @@ public class Task {
     private String timeInterval;
     private String category;
     private String priority = "LOW";
+    private LocalDate dueDate;
+
 
     public Task() {}
 
@@ -45,6 +49,13 @@ public class Task {
 
     public String getPriority() {return  priority;}
     public void setPriority(String priority) {this.priority = priority; }
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
+    }
 
     public Long getId() { return id; }
 
