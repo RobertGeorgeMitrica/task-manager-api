@@ -78,7 +78,7 @@ async function toggleTask(id, currentStatus) {
 async function filterByAnyDate() {
     const selectedDate = document.getElementById('calendarFilter').value;
     if (!selectedDate) {
-        fetchTasks(); // Dacă șterge data, arătăm tot
+        fetchTasks();
         return;
     }
 
@@ -89,7 +89,7 @@ async function filterByAnyDate() {
         const response = await fetch(`${API_URL}/date?date=${selectedDate}`);
         if (response.ok) {
             const filteredTasks = await response.json();
-            // IMPORTANT: Nu suprascriem allTasks aici, doar afișăm rezultatul
+
             renderTasks(filteredTasks);
         }
     } catch (error) {
@@ -122,17 +122,28 @@ async function clearCompleted() {
 function renderTasks(tasksToDisplay) {
     renderStats();
 
-    tasksToDisplay.sort((a, b) => {
-            const dateA = a.dueDate || "9999-12-31"; // Task-urile fără dată merg la final
-            const dateB = b.dueDate || "9999-12-31";
-
-            if (dateA !== dateB) { return dateA.localeCompare(dateB); }
-            return (a.timeInterval || "").localeCompare(b.timeInterval || "");
-        });
-
     const list = document.getElementById('taskList');
     const todayStr = new Date().toISOString().split('T')[0];
     list.innerHTML = '';
+
+    if (tasksToDisplay.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <span class="icon">🌿</span>
+                        <h4>Your forest is quiet...</h4>
+                        <p>No tasks found for this day. Enjoy the peace or plan a new goal!</p>
+                    </div>
+                `;
+                return; // Oprim execuția aici
+    }
+
+     tasksToDisplay.sort((a, b) => {
+                 const dateA = a.dueDate || "9999-12-31";
+                 const dateB = b.dueDate || "9999-12-31";
+
+                 if (dateA !== dateB) { return dateA.localeCompare(dateB); }
+                 return (a.timeInterval || "").localeCompare(b.timeInterval || "");
+     });
 
     tasksToDisplay.forEach((task, index) => {
         const style = getCategoryStyle(task.category);
@@ -149,7 +160,7 @@ function renderTasks(tasksToDisplay) {
         div.className = `card ${task.completed ? 'is-completed' : ''} ${isCurrent} ${isToday ? 'today-highlight' : ''}`;
 
         if (isToday && !task.completed) {
-                div.style.borderTop = "3px solid #f1c40f"; // O dungă aurie sus
+                div.style.borderTop = "3px solid #f1c40f";
                 div.style.backgroundColor = "rgba(241, 196, 15, 0.05)";
         }
 
@@ -164,9 +175,16 @@ function renderTasks(tasksToDisplay) {
                         <span style="background: ${style.bg}; color: ${style.text}; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">
                             ${task.category || 'General'}
                         </span>
+                        <span style="background: ${priorityColors[task.priority] || '#55efc4'}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; margin-left: 5px;">
+                            ${task.priority}
+                        </span>
                     </div>
                     <div style="margin: 12px 0 0 32px; display: flex; flex-direction: column;">
-                        <div id="desc-${task.id}" class="task-description collapsed">
+                        <div id="desc-${task.id}"
+                             class="task-description collapsed"
+                             contenteditable="true"
+                             onblur="updateDescription(${task.id}, this.innerText)"
+                             style="outline: none; cursor: edit; padding: 5px; border-radius: 4px;">
                             ${formattedDescription || 'No description provided.'}
                         </div>
                         ${hasMore ? `<button class="btn-read-more" onclick="toggleDescription(${task.id})">Read More</button>` : ''}
@@ -319,11 +337,79 @@ function toggleDescription(taskId) {
     btn.innerText = isCollapsed ? 'Show Less' : 'Read More';
 }
 
+async function updateDescription(id, newDescription) {
+    const task = allTasks.find(t => t.id === id);
+    if (!task) return;
+
+    try {
+        await fetch(`${API_URL}/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...task, description: newDescription })
+        });
+        // Nu apelăm fetchTasks aici pentru a nu reseta scroll-ul,
+        // doar actualizăm variabila locală
+        task.description = newDescription;
+    } catch (error) {
+        console.error("Update error:", error);
+    }
+}
+
 let actionToConfirm = null;
 function showModal(cb) { actionToConfirm = cb; document.getElementById('customModal').style.display = 'flex'; }
 function closeModal() { document.getElementById('customModal').style.display = 'none'; }
 document.getElementById('confirmBtn').onclick = async () => { if (actionToConfirm) await actionToConfirm(); closeModal(); };
 
 fetchTasks();
-setInterval(() => renderTasks(allTasks), 60000);
+//setInterval(() => renderTasks(allTasks), 60000);
 window.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+window.onload = () => {
+    const today = new Date().toISOString().split('T')[0];
+
+    // 1. Setăm data implicită în formular și blocăm trecutul
+    const dateInput = document.getElementById('dateInput');
+    if(dateInput) {
+        dateInput.value = today;
+        dateInput.min = today;
+    }
+
+    filterBySpecificDate(today);
+};
+
+
+
+/* ==========================================
+   6. CALENDAR INITIALIZATION
+   ========================================== */
+document.addEventListener('DOMContentLoaded', function() {
+    flatpickr("#inlineCalendar", {
+        inline: true,
+        dateFormat: "Y-m-d",
+        defaultDate: "today",
+        onChange: function(selectedDates, dateStr) {
+            filterBySpecificDate(dateStr);
+        }
+    });
+});
+
+async function filterBySpecificDate(dateStr) {
+    try {
+        const response = await fetch(`${API_URL}/date?date=${dateStr}`);
+        const tasks = await response.json();
+        renderTasks(tasks);
+
+        document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active-filter'));
+    } catch (error) {
+        console.error("Error filtering by date:", error);
+    }
+}
+
+function resetToAll() {
+    fetchTasks();
+
+    const calendar = document.querySelector("#inlineCalendar")._flatpickr;
+    if (calendar) {
+        calendar.clear();
+    }
+}

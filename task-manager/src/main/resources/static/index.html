@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Task Manager Pro</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <style>
         :root {
             --primary: #2d6a4f;
@@ -55,7 +57,16 @@
 
         .completed { text-decoration: line-through; color: #b2bec3; }
 
-        .card.is-completed { border-left-color: var(--success); }
+        .card.is-completed {
+            border-left-color: var(--success);
+            opacity: 0.75;
+            transform: scale(0.99); /* Task-ul pare că se "retrage" când e gata */
+        }
+
+        .card.is-completed h3 {
+            text-decoration: line-through;
+            color: #636e72;
+        }
 
         input, select, textarea {
             width: 100%; padding: 12px; margin: 0;
@@ -141,6 +152,25 @@
         .task-description.collapsed { max-height: 4.8em;  margin-bottom: 5px; }
         .task-description.expanded { max-height: 1000px; margin-bottom: 10px; }
 
+        .task-description[contenteditable="true"] {
+            cursor: text; /* Schimbă cursorul să arate că poți scrie */
+            padding: 5px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .task-description[contenteditable="true"]:hover {
+            background: rgba(45, 106, 79, 0.05); /* Un verde foarte șters */
+            box-shadow: inset 0 0 0 1px rgba(45, 106, 79, 0.2);
+        }
+
+        .task-description[contenteditable="true"]:focus {
+            background: white;
+            box-shadow: inset 0 0 0 2px var(--primary);
+            outline: none;
+            max-height: none !important; /* Se deschide complet când scrii în el */
+        }
+
         .btn-read-more {
             display: block; /* Îl forțăm să stea pe rândul lui, sub text */
             background: rgba(45, 106, 79, 0.08);
@@ -183,6 +213,28 @@
         #calendarFilter::-webkit-calendar-picker-indicator {
             cursor: pointer;
             filter: invert(30%) sepia(20%) saturate(1000%) hue-rotate(110deg);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            color: white;
+            backdrop-filter: blur(10px);
+            margin-top: 20px;
+        }
+
+        .empty-state h4 {
+            margin: 10px 0;
+            font-size: 1.2rem;
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 15px;
         }
     </style>
 </head>
@@ -264,17 +316,20 @@
         </div>
 
         <div style="flex: 1; position: sticky; top: 40px;">
-            <div class="card" style="border-left: 5px solid var(--primary); padding: 15px; background: rgba(255, 255, 255, 0.95);">
-                <label style="color: #2d3436; font-weight: bold; font-size: 0.85rem; margin-bottom: 12px; display: block; text-align: center;">
-                    📅 NAVIGATE BY DATE
-                </label>
-                <input type="date" id="calendarFilter" onchange="filterByAnyDate()"
-                       style="border: 2px solid var(--primary); padding: 10px; border-radius: 8px; width: 100%;">
-                <p style="font-size: 0.7rem; color: #636e72; margin-top: 10px; text-align: center;">
-                    Select a date to see scheduled tasks.
+            <div class="card" style="padding: 15px; background: white; border-top: 5px solid var(--primary);">
+                <h4 style="margin-top: 0; color: var(--primary); text-align: center; font-size: 0.9rem;">
+                    📅 SELECT DATE
+                </h4>
+
+                <div id="inlineCalendar" style="margin-bottom: 10px;"></div>
+
+                <p style="font-size: 0.7rem; color: #636e72; margin-top: 10px; text-align: center; line-height: 1.2;">
+                    Select a date to see scheduled tasks for that day.
                 </p>
-                <button class="btn-filter" style="margin-top: 15px; width: 100%; text-align: center; background: var(--primary); color: white;"
-                        onclick="fetchTasks(); document.getElementById('calendarFilter').value=''">
+
+                <button class="btn-filter"
+                        style="margin-top: 15px; width: 100%; text-align: center; background: var(--primary); color: white; border: none;"
+                        onclick="resetToAll()">
                     Reset to All
                 </button>
             </div>
