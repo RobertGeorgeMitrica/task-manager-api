@@ -1,5 +1,6 @@
 package com.robert.task_manager;
 
+import com.robert.task_manager.dto.CategoryStats;
 import com.robert.task_manager.service.TaskService;
 import dto.TaskDTO;
 import jakarta.validation.Valid;
@@ -7,15 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
-import java.util.LongSummaryStatistics;
-import java.util.Map;
+
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -23,6 +20,9 @@ import java.util.Map;
 public class TaskController {
     @Autowired
     private TaskService taskService;
+
+    @Autowired
+    private TaskRepository taskRepository;
 
     @GetMapping
     public List<TaskDTO> getAllTask() {
@@ -60,6 +60,11 @@ public class TaskController {
     @GetMapping("/date")
     public List<TaskDTO> getTaskByDueDate(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return  taskService.getTaskByDueDate(date);
+    }
+
+    @GetMapping("/report")
+    public List<CategoryStats> getReport() {
+        return taskRepository.getProductivityReport();
     }
 }
 

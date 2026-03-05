@@ -2,355 +2,156 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Task Manager Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager Pro 🌿</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
-        :root {
-            --primary: #2d6a4f;
-            --success: #52b788;
-            --danger: #e74c3c;
-            --bg: #1b4332;
-        }
+        :root { --primary: #2d6a4f; --success: #52b788; --danger: #e63946; }
 
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            margin: 0;
-            padding: 40px;
-            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0; padding: 40px;
+            background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)),
                         url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1920&q=80');
-            background-size: cover;
-            background-attachment: fixed;
-            background-position: center;
-            color: #2d3436;
+            background-size: cover; background-attachment: fixed;
         }
 
-        .container { max-width: 1100px; margin: auto; }
+        .container { max-width: 1300px; margin: auto; }
 
+        /* Add Task Card */
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px; border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+        }
+
+        .input-row { display: grid; grid-template-columns: 1fr 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        input, select, textarea { padding: 12px; border-radius: 10px; border: 1px solid #ddd; outline: none; font-size: 14px; }
+
+        .btn-add {
+            background: var(--primary); color: white; border: none; padding: 12px 35px;
+            border-radius: 25px; font-weight: bold; cursor: pointer; float: right;
+            transition: 0.3s;
+        }
+
+        /* 3-Column Layout */
+        .grid-layout { display: flex; gap: 30px; align-items: flex-start; }
+
+        .sidebar-left { flex: 0 0 220px; }
+        .content-center { flex: 1; }
+        .sidebar-right { flex: 0 0 320px; }
+
+        /* Glassmorphism Cards */
         .card {
-           background: rgba(255, 255, 255, 0.98); /* Mai puțin transparent pentru lizibilitate maximă */
-           backdrop-filter: blur(15px);
-           padding: 25px; /* Puțin mai mult spațiu interior */
-           margin-bottom: 25px;
-           border-radius: 16px; /* Colțuri mai rotunjite, mai moderne */
-           border: 1px solid rgba(255, 255, 255, 0.3); /* O bordură fină de sticlă */
-           border-left: 6px solid var(--primary); /* Bordura laterală un pic mai groasă */
-           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12); /* Umbră mai difuză și mai naturală */
-           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Animație mai fină */
-        }
-
-
-        .card:hover {
-         transform: translateY(-5px); /* Se ridică un pic mai mult la hover */
-         box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
-        }
-
-        h1 {
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            font-weight: 800;
-            margin-bottom: 30px;
-        }
-
-        .task-header { display: flex; justify-content: space-between; align-items: flex-start; }
-
-        .completed { text-decoration: line-through; color: #b2bec3; }
-
-        .card.is-completed {
-            border-left-color: var(--success);
-            opacity: 0.75;
-            transform: scale(0.99); /* Task-ul pare că se "retrage" când e gata */
-        }
-
-        .card.is-completed h3 {
-            text-decoration: line-through;
-            color: #636e72;
-        }
-
-        input, select, textarea {
-            width: 100%; padding: 12px; margin: 0;
-            border: 2px solid #eee; border-radius: 8px; outline: none;
-            transition: border-color 0.3s; box-sizing: border-box;
-            background: rgba(255, 255, 255, 0.8);
-            font-family: inherit;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            border-color: var(--primary);
-            background: white;
-        }
-
-        .btn {
-            padding: 10px 20px; border-radius: 8px; border: none;
-            font-weight: 600; cursor: pointer; transition: 0.3s;
-        }
-
-        .btn-save {
-            background: var(--primary); color: white; width: 100%;
-            letter-spacing: 1px; text-transform: uppercase;
-        }
-
-        .btn-complete { background: var(--success); color: white; margin-right: 10px; }
-        .btn-undo { background: #636e72; color: white; margin-right: 10px; }
-        .btn-delete { background: var(--danger); color: white; }
-        .btn:hover { opacity: 0.85; transform: scale(0.98); }
-
-        .btn-filter {
-           background: rgba(255, 255, 255, 0.1);
-           border: 1px solid rgba(255, 255, 255, 0.2);
-           padding: 12px 20px;
-           border-radius: 10px;
-           cursor: pointer;
-           font-weight: 600;
-           color: white;
-           text-align: left;
-           display: block;
-           transition: all 0.3s;
-           width: 100%;
-           backdrop-filter: blur(5px);
-           margin-bottom: 8px;
-        }
-
-        .btn-filter.active-filter {
-            background: var(--primary);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        .btn-clear {
-            background: rgba(45, 106, 79, 0.15);
-            color: #b2f2bb;
-            border: 1px solid #52b788;
-            margin-top: 15px;
-            width: 100%;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        @keyframes pulse-border {
-            0% { box-shadow: 0 0 0 0 rgba(82, 183, 136, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(82, 183, 136, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(82, 183, 136, 0); }
-        }
-
-        .current-task {
-            border: 3px solid var(--success) !important;
-            animation: pulse-border 2s infinite !important;
-            transform: scale(1.02);
-            z-index: 10;
-        }
-
-        .task-description {
-           color: #2d3436;
-           line-height: 1.6;
-           font-size: 0.9rem;
-           transition: max-height 0.3s ease-in-out;
-           overflow: hidden; /* Asta va tăia textul care depășește limita */
-           position: relative;
-        }
-
-        .task-description.collapsed { max-height: 4.8em;  margin-bottom: 5px; }
-        .task-description.expanded { max-height: 1000px; margin-bottom: 10px; }
-
-        .task-description[contenteditable="true"] {
-            cursor: text; /* Schimbă cursorul să arate că poți scrie */
-            padding: 5px;
-            border-radius: 4px;
-            transition: all 0.2s ease;
-        }
-
-        .task-description[contenteditable="true"]:hover {
-            background: rgba(45, 106, 79, 0.05); /* Un verde foarte șters */
-            box-shadow: inset 0 0 0 1px rgba(45, 106, 79, 0.2);
-        }
-
-        .task-description[contenteditable="true"]:focus {
-            background: white;
-            box-shadow: inset 0 0 0 2px var(--primary);
-            outline: none;
-            max-height: none !important; /* Se deschide complet când scrii în el */
-        }
-
-        .btn-read-more {
-            display: block; /* Îl forțăm să stea pe rândul lui, sub text */
-            background: rgba(45, 106, 79, 0.08);
-            color: var(--primary);
-            border: none;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            cursor: pointer;
-            width: fit-content; /* Se strânge cât e textul */
-            margin-top: 5px;
-        }
-
-        .countdown-badge {
-            display: inline-block;
-            margin-top: 5px;
-            padding: 2px 6px;
-            background: rgba(225, 112, 85, 0.1);
-            color: #e17055;
-            border-radius: 4px;
-            font-size: 0.65rem;
-            font-weight: bold;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.6; }
-            100% { opacity: 1; }
-        }
-
-        #calendarFilter {
-            cursor: pointer;
-            font-family: inherit;
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        #calendarFilter::-webkit-calendar-picker-indicator {
-            cursor: pointer;
-            filter: invert(30%) sepia(20%) saturate(1000%) hue-rotate(110deg);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            border: 2px dashed rgba(255, 255, 255, 0.3);
-            color: white;
+            background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
-            margin-top: 20px;
+            padding: 20px; border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.3);
         }
 
-        .empty-state h4 {
-            margin: 10px 0;
-            font-size: 1.2rem;
+        /* Task Cards */
+        .task-card {
+            background: white; border-radius: 15px; padding: 20px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-left: 8px solid var(--primary);
+            transition: 0.2s ease;
         }
+        .priority-HIGH { border-left-color: var(--danger); }
+        .priority-MEDIUM { border-left-color: #f39c12; }
+        .priority-LOW { border-left-color: #3498db; }
 
-        .empty-state .icon {
-            font-size: 3rem;
-            display: block;
-            margin-bottom: 15px;
+        /* Sidebar Buttons */
+        .btn-side {
+            width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.2);
+            color: white; font-weight: 600; cursor: pointer; text-align: left;
         }
+        .btn-side.active { background: var(--primary); }
+        .btn-clear { background: var(--danger); color: white; border: none; width: 100%; padding: 10px; border-radius: 10px; cursor: pointer; }
+
+        /* Calendar Fix */
+        #inlineCalendar { width: 100% !important; }
+        .flatpickr-calendar { box-shadow: none !important; width: 100% !important; background: transparent !important; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Task Manager</h1>
+    <h1 style="color: white; font-size: 2.5rem; margin-bottom: 30px;">Task Manager 🌿</h1>
 
-    <div class="card" style="padding: 25px; border-left: 5px solid var(--primary); margin-bottom: 40px; background: rgba(255, 255, 255, 0.95);">
-        <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center; flex-wrap: wrap;">
-            <select id="timeInput" style="flex: 1.2; border: 1px solid #ddd;">
-                <option value="">Select Time</option>
-                <option value="08:00 - 09:30">08:00 - 09:30</option>
-                <option value="09:30 - 11:00">09:30 - 11:00</option>
-                <option value="11:00 - 12:30">11:00 - 12:30</option>
-                <option value="12:30 - 14:00">12:30 - 14:00</option>
-                <option value="14:00 - 15:30">14:00 - 15:30</option>
-                <option value="15:30 - 17:00">15:30 - 17:00</option>
-                <option value="17:00 - 18:30">17:00 - 18:30</option>
-                <option value="19:00 - 20:30">19:00 - 20:30</option>
-                <option value="20:30 - 22:00">20:30 - 22:00</option>
-            </select>
-
-            <input id="titleInput" placeholder="What's the main focus?" style="flex: 2.5; border: 1px solid #ddd;" type="text">
-
-            <select id="categoryInput" style="flex: 1.2; border: 1px solid #ddd;">
-                <option value="">Category</option>
+    <div class="main-card">
+        <div class="input-row">
+            <select id="timeInput"></select>
+            <input type="text" id="titleInput" placeholder="What's the main focus?">
+            <select id="categoryInput">
+                <option value="GENERAL">Category</option>
                 <option value="DEEP WORK">DEEP WORK</option>
-                <option value="BREAK">BREAK</option>
                 <option value="SPORT">SPORT</option>
                 <option value="SQL PRACTICE">SQL PRACTICE</option>
                 <option value="DOCUMENTATION">DOCUMENTATION</option>
             </select>
-
-            <select id="priorityInput" class="input-field">
+            <select id="priorityInput">
                 <option value="LOW">Low Priority</option>
                 <option value="MEDIUM">Medium Priority</option>
                 <option value="HIGH">High Priority</option>
             </select>
-
-            <div style="flex: 1.2;">
-                <input type="date" id="dateInput" style="border: 1px solid #ddd; height: 100%;">
-            </div>
-
+            <input type="date" id="dateInput">
         </div>
-
-        <div style="margin-bottom: 20px;">
-        <textarea id="descInput" placeholder="Detailed notes (steps, links, sub-tasks)..."
-                  style="width: 100%; min-height: 100px; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
-        </div>
-
-        <div style="display: flex; justify-content: flex-end;">
-            <button class="btn btn-save" onclick="createTask()" style="width: auto; padding: 12px 40px; border-radius: 30px; box-shadow: 0 4px 15px rgba(45, 106, 79, 0.2);">
-                + Add Task
-            </button>
-        </div>
+        <textarea id="descInput" placeholder="Detailed notes (steps, links, sub-tasks)..." style="width: 100%; height: 70px; box-sizing: border-box;"></textarea>
+        <button class="btn-add" onclick="createTask()">+ ADD TASK</button>
+        <div style="clear: both;"></div>
     </div>
 
-    <div style="display: flex; gap: 20px; align-items: flex-start;">
-
-        <div style="flex: 1; position: sticky; top: 40px;">
-            <div class="card" id="stats" style="border-left: 5px solid #636e72; padding: 15px; margin-bottom: 20px;"></div>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <button class="btn-filter active-filter" onclick="filterTasks('all', this)">All Tasks</button>
-                <button class="btn-filter" onclick="filterTasks('active', this)">To Do</button>
-                <button class="btn-filter" onclick="filterTasks('completed', this)">Finished</button>
-                <button class="btn btn-clear" onclick="clearCompleted()">🗑️ Clear Finished</button>
+    <div class="grid-layout">
+        <div class="sidebar-left">
+            <div class="card" style="background: white;">
+                <p style="margin:0; font-weight:bold;">Progress: <span id="percText">0%</span></p>
+                <div style="background:#eee; height:8px; border-radius:4px; margin:10px 0; overflow:hidden;">
+                    <div id="progBar" style="background:var(--success); width:0%; height:100%; transition:0.5s;"></div>
+                </div>
+                <small id="countText" style="color:#666;">0/0 Tasks left</small>
             </div>
-            <div class="card" id="categoryStats" style="border-left: 5px solid var(--success); margin-top: 20px; padding: 15px; font-size: 0.85rem;"></div>
+
+            <button class="btn-side active" onclick="filterTasks('all', this)">All Tasks</button>
+            <button class="btn-side" onclick="filterTasks('active', this)">To Do</button>
+            <button class="btn-side" onclick="filterTasks('completed', this)">Finished</button>
+            <button class="btn-clear" onclick="clearCompleted()">🗑️ CLEAR FINISHED</button>
+
+            <div class="card" style="margin-top:20px;">
+                <h4 style="margin-top:0">Time Distribution</h4>
+                <div id="categoryStatsList"></div>
+            </div>
         </div>
 
-        <div style="flex: 2.5;">
-            <div class="card" style="border-left-color: #636e72; margin-bottom: 20px; padding: 10px 15px;">
-                <input type="text" id="searchInput" oninput="searchTasks()"
-                       placeholder="🔍 Search tasks..."
-                       style="background: rgba(255,255,255,0.7); border: 1px solid #ddd; width: 100%;">
-            </div>
+        <div class="content-center">
+            <input type="text" id="searchInput" oninput="searchTasks()" placeholder="🔍 Search tasks..." style="width:100%; border:none; padding:15px; border-radius:15px; margin-bottom:20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
             <div id="taskList"></div>
         </div>
 
-        <div style="flex: 1; position: sticky; top: 40px;">
-            <div class="card" style="padding: 15px; background: white; border-top: 5px solid var(--primary);">
-                <h4 style="margin-top: 0; color: var(--primary); text-align: center; font-size: 0.9rem;">
-                    📅 SELECT DATE
-                </h4>
-
-                <div id="inlineCalendar" style="margin-bottom: 10px;"></div>
-
-                <p style="font-size: 0.7rem; color: #636e72; margin-top: 10px; text-align: center; line-height: 1.2;">
-                    Select a date to see scheduled tasks for that day.
-                </p>
-
-                <button class="btn-filter"
-                        style="margin-top: 15px; width: 100%; text-align: center; background: var(--primary); color: white; border: none;"
-                        onclick="resetToAll()">
-                    Reset to All
-                </button>
+        <div class="sidebar-right">
+            <div class="card" style="background: white; text-align:center;">
+                <h4 style="margin-top:0; color:var(--primary);">📅 SELECT DATE</h4>
+                <div id="inlineCalendar"></div>
+                <button onclick="resetToAll()" class="btn-add" style="float:none; width:100%; margin-top:15px; border-radius:10px;">Reset to All</button>
+                <button id="openReportBtn" class="btn-add" style="float:none; width:100%; margin-top:10px; border-radius:10px; background:#2ecc71;">📊 Productivity Report</button>
             </div>
-        </div>
-
-    </div>
-</div>
-
-<div id="customModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; backdrop-filter: blur(5px);">
-    <div class="card" style="max-width:400px; text-align:center; border-left: 5px solid var(--danger);">
-        <h3 style="margin-top:0;">Are you sure?</h3>
-        <p>This action will permanently delete the selected tasks.</p>
-        <div style="display:flex; gap:10px; margin-top:20px;">
-            <button class="btn" onclick="closeModal()" style="flex:1; background:#636e72; color:white;">Cancel</button>
-            <button id="confirmBtn" class="btn btn-delete" style="flex:1;">Yes, delete them</button>
         </div>
     </div>
 </div>
 
 <script src="script.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-
+<script>
+    const sel = document.getElementById('timeInput');
+    for(let i=8; i<21; i++){
+        let h = i < 10 ? '0'+i+':00' : i+':00';
+        let hN = (i+1) < 10 ? '0'+(i+1)+':00' : (i+1)+':00';
+        sel.innerHTML += `<option value="${h} - ${hN}">${h} - ${hN}</option>`;
+    }
+</script>
 </body>
 </html>

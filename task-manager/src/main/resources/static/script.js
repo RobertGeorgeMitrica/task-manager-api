@@ -1,415 +1,130 @@
-/* ==========================================
-   1. CONFIGURATION & STATE
-   ========================================== */
-const API_URL = 'http://localhost:8080/api/tasks';
+const API_URL = '/api/tasks';
 let allTasks = [];
 
-/* ==========================================
-   2. API SERVICES (Communication with Server)
-   ========================================== */
 async function fetchTasks() {
     try {
         const response = await fetch(API_URL);
         allTasks = await response.json();
         renderTasks(allTasks);
-    } catch (error) {
-        console.error("Error fetching tasks:", error);
-    }
+    } catch (e) { console.error(e); }
 }
 
 async function createTask() {
-    // 1. Colectăm toate valorile din input-uri
-    const timeInterval = document.getElementById('timeInput').value;
-    const title = document.getElementById('titleInput').value.trim();
-    const description = document.getElementById('descInput').value;
-    const priority = document.getElementById('priorityInput').value;
-    const category = document.getElementById('categoryInput').value;
+    const task = {
+        title: document.getElementById('titleInput').value,
+        description: document.getElementById('descInput').value,
+        timeInterval: document.getElementById('timeInput').value,
+        category: document.getElementById('categoryInput').value,
+        priority: document.getElementById('priorityInput').value,
+        dueDate: document.getElementById('dateInput').value,
+        completed: false
+    };
+    if(!task.title) return alert("Please enter a title");
 
-    // ATENȚIE: Folosim id-ul 'dateInput' pe care l-am pus în HTML
-    const dueDate = document.getElementById('dateInput').value;
+    await fetch(API_URL, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(task)
+    });
 
-    // 2. Validare minimă
-    if (title.length < 3) {
-        alert("Title must be at least 3 characters long!");
-        return;
-    }
-
-    // 3. Trimitem UN SINGUR fetch cu toate datele
-    try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                title,
-                description,
-                completed: false,
-                timeInterval,
-                category,
-                priority,
-                dueDate // Aici pleacă data către Backend-ul tău Java
-            })
-        });
-
-        if (response.ok) {
-            resetForm(); // Curățăm câmpurile
-            fetchTasks(); // Reîmprospătăm lista
-        }
-    } catch (error) {
-        console.error("Error creating task:", error);
-    }
+    document.getElementById('titleInput').value = '';
+    document.getElementById('descInput').value = '';
+    fetchTasks();
 }
 
 async function toggleTask(id, currentStatus) {
     const task = allTasks.find(t => t.id === id);
-    if (!task) return;
-
-    try {
-        await fetch(`${API_URL}/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...task, completed: !currentStatus })
-        });
-        fetchTasks();
-    } catch (error) {
-        console.error("Toggle error:", error);
-    }
-}
-
-async function filterByAnyDate() {
-    const selectedDate = document.getElementById('calendarFilter').value;
-    if (!selectedDate) {
-        fetchTasks();
-        return;
-    }
-
-    // Curățăm stilul butoanelor din stânga
-    document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active-filter'));
-
-    try {
-        const response = await fetch(`${API_URL}/date?date=${selectedDate}`);
-        if (response.ok) {
-            const filteredTasks = await response.json();
-
-            renderTasks(filteredTasks);
-        }
-    } catch (error) {
-        console.error("Filtering error:", error);
-    }
+    await fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({...task, completed: !currentStatus})
+    });
+    fetchTasks();
 }
 
 async function deleteTask(id) {
-    showModal(async () => {
+    if(confirm("Delete this task?")) {
         await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
         fetchTasks();
-    });
+    }
 }
 
-async function clearCompleted() {
-    const completedTasks = allTasks.filter(t => t.completed);
-    if (completedTasks.length === 0) return;
-
-    showModal(async () => {
-        await Promise.all(completedTasks.map(task =>
-            fetch(`${API_URL}/${task.id}`, { method: 'DELETE' })
-        ));
-        fetchTasks();
-    });
-}
-
-/* ==========================================
-   3. UI RENDERING (DOM Manipulation)
-   ========================================== */
-function renderTasks(tasksToDisplay) {
-    renderStats();
-
+function renderTasks(tasks) {
     const list = document.getElementById('taskList');
-    const todayStr = new Date().toISOString().split('T')[0];
     list.innerHTML = '';
 
-    if (tasksToDisplay.length === 0) {
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <span class="icon">🌿</span>
-                        <h4>Your forest is quiet...</h4>
-                        <p>No tasks found for this day. Enjoy the peace or plan a new goal!</p>
-                    </div>
-                `;
-                return; // Oprim execuția aici
-    }
-
-     tasksToDisplay.sort((a, b) => {
-                 const dateA = a.dueDate || "9999-12-31";
-                 const dateB = b.dueDate || "9999-12-31";
-
-                 if (dateA !== dateB) { return dateA.localeCompare(dateB); }
-                 return (a.timeInterval || "").localeCompare(b.timeInterval || "");
-     });
-
-    tasksToDisplay.forEach((task, index) => {
-        const style = getCategoryStyle(task.category);
-        const isToday = task.dueDate === todayStr;
-        const isCurrent = (task.timeInterval && isTaskCurrent(task.timeInterval)) ? 'current-task' : '';
-
-        const descriptionLines = (task.description || '').split('\n').filter(line => line.trim() !== '');
-        const formattedDescription = descriptionLines.map(line => `• ${line}`).join('<br>');
-        const hasMore = descriptionLines.length > 3;
-
-        const priorityColors = { 'HIGH': '#ff7675', 'MEDIUM': '#fdcb6e', 'LOW': '#55efc4' };
-
+    tasks.forEach(t => {
         const div = document.createElement('div');
-        div.className = `card ${task.completed ? 'is-completed' : ''} ${isCurrent} ${isToday ? 'today-highlight' : ''}`;
-
-        if (isToday && !task.completed) {
-                div.style.borderTop = "3px solid #f1c40f";
-                div.style.backgroundColor = "rgba(241, 196, 15, 0.05)";
-        }
-
-        div.style.borderLeft = `6px solid ${priorityColors[task.priority] || '#55efc4'}`;
-
+        div.className = `task-card priority-${t.priority} ${t.completed ? 'completed' : ''}`;
         div.innerHTML = `
-            <div class="task-header">
-                <div style="width: 100%;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="color: var(--primary); font-weight: bold;">#${index + 1}</span>
-                        <h3 class="${task.completed ? 'completed' : ''}" style="margin: 0;">${task.title}</h3>
-                        <span style="background: ${style.bg}; color: ${style.text}; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">
-                            ${task.category || 'General'}
-                        </span>
-                        <span style="background: ${priorityColors[task.priority] || '#55efc4'}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; margin-left: 5px;">
-                            ${task.priority}
-                        </span>
-                    </div>
-                    <div style="margin: 12px 0 0 32px; display: flex; flex-direction: column;">
-                        <div id="desc-${task.id}"
-                             class="task-description collapsed"
-                             contenteditable="true"
-                             onblur="updateDescription(${task.id}, this.innerText)"
-                             style="outline: none; cursor: edit; padding: 5px; border-radius: 4px;">
-                            ${formattedDescription || 'No description provided.'}
-                        </div>
-                        ${hasMore ? `<button class="btn-read-more" onclick="toggleDescription(${task.id})">Read More</button>` : ''}
-                    </div>
+            <div style="flex: 1;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <h3 style="margin:0; font-size:1.1rem;">${t.title}</h3>
+                    <span style="background:#f0f7f4; color:#2d6a4f; padding:2px 8px; border-radius:5px; font-size:0.7em; font-weight:bold;">${t.category}</span>
                 </div>
-
-                <div style="text-align: right; min-width: 100px;">
-                    <div style="font-size: 0.8rem; font-weight: bold; color: #b2bec3;">
-                        ${task.timeInterval || '--:--'}
-                    </div>
-                    <div style="font-size: 0.75rem; color: var(--primary); margin-top: 4px; font-weight: 600;">
-                        📅 ${task.dueDate ? task.dueDate : 'No date'}
-                    </div>
-                    ${getTimeUntil(task.timeInterval)}
-                </div>
+                <p style="color: #666; margin: 10px 0; font-size:0.9rem;">${t.description || ''}</p>
             </div>
-            <div class="actions" style="margin-top: 15px; padding-left: 32px;">
-                <button class="btn ${task.completed ? 'btn-undo' : 'btn-complete'}" onclick="toggleTask(${task.id}, ${task.completed})">
-                    ${task.completed ? 'Undo' : 'Done'}
-                </button>
-                <button class="btn btn-delete" onclick="deleteTask(${task.id})">Remove</button>
+            <div style="text-align: right; min-width: 130px;">
+                <div style="font-weight: bold; color: var(--primary); margin-bottom:10px;">${t.timeInterval || ''}</div>
+                <button onclick="toggleTask(${t.id}, ${t.completed})" style="background:${t.completed ? '#bdc3c7' : '#52b788'}; color:white; border:none; padding:8px 15px; border-radius:12px; cursor:pointer; font-weight:bold;">${t.completed ? 'Undo' : 'Done'}</button>
+                <button onclick="deleteTask(${t.id})" style="background:#e63946; color:white; border:none; padding:8px 12px; border-radius:12px; cursor:pointer; margin-left:5px;">Remove</button>
             </div>
         `;
         list.appendChild(div);
     });
-    updateCategoryStats();
+    updateStats();
 }
 
-function renderStats() {
+function updateStats() {
     const total = allTasks.length;
-    const completed = allTasks.filter(t => t.completed).length;
-    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
-    const remaining = total - completed;
+    const done = allTasks.filter(t => t.completed).length;
+    const perc = total > 0 ? Math.round((done / total) * 100) : 0;
 
-    const stats = document.getElementById('stats');
-    if (!stats) return;
+    document.getElementById('progBar').style.width = perc + '%';
+    document.getElementById('percText').innerText = perc + '%';
+    document.getElementById('countText').innerText = `${total - done} Tasks left`;
 
-    // Confetti trigger
-    if (percent === 100 && total > 0) {
-        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#00b894', '#55efc4', '#00cec9'] });
-    }
+    const catStats = {};
+    allTasks.forEach(t => catStats[t.category] = (catStats[t.category] || 0) + 1);
+    document.getElementById('categoryStatsList').innerHTML = Object.entries(catStats)
+        .map(([cat, count]) => `<div style="display:flex; justify-content:space-between; font-size:0.9em; margin-bottom:5px;"><span>${cat}</span> <b>${count}</b></div>`)
+        .join('');
 
-    stats.innerHTML = `
-        <div style="margin-bottom: 10px;">
-            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem;">
-                <span>Progress: ${percent}%</span>
-                <span style="color: var(--primary);">${completed}/${total} Tasks</span>
-            </div>
-            <p style="margin: 5px 0 10px 0; font-size: 0.8rem; color: #636e72;">
-                ${remaining === 0 && total > 0 ? "🎉 All done!" : `<b>${remaining}</b> tasks left.`}
-            </p>
-            <div style="background: #e9ecef; border-radius: 10px; height: 8px; overflow: hidden;">
-                <div style="background: var(--success); width: ${percent}%; height: 100%; transition: width 0.5s;"></div>
-            </div>
-        </div>
-    `;
+    if(perc === 100 && total > 0) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
 }
 
-function updateCategoryStats() {
-    const statsContainer = document.getElementById('categoryStats');
-    if (!statsContainer) return;
-    const counts = {};
-    allTasks.forEach(task => {
-        const cat = task.category || 'General';
-        counts[cat] = (counts[cat] || 0) + 1;
-    });
-    let html = '<h4 style="margin-top: 0; margin-bottom: 15px; font-size: 0.9rem; color: #2d3436;">Time Distribution</h4>';
-    for (const [category, count] of Object.entries(counts)) {
-        const style = getCategoryStyle(category);
-        html += `<div style="display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center;">
-                <span style="background: ${style.bg}; color: ${style.text}; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase;">${category}</span>
-                <span style="font-weight: bold; color: #636e72; font-size: 0.85rem;">${count}</span>
-            </div>`;
-    }
-    statsContainer.innerHTML = html;
-}
-
-/* ==========================================
-   4. HELPERS & UTILITIES
-   ========================================== */
-function getCategoryStyle(category) {
-    const cat = (category || '').toUpperCase();
-    const styles = {
-        'DEEP WORK': { bg: '#d1edda', text: '#155724' },
-        'BREAK':     { bg: '#fff3cd', text: '#856404' },
-        'SPORT':     { bg: '#f8d7da', text: '#721c24' },
-        'SQL PRACTICE': { bg: '#e8daff', text: '#4527a0' },
-        'DOCUMENTATION': { bg: '#e1f5fe', text: '#0288d1' }
-    };
-    return styles[cat] || { bg: '#f1f2f6', text: '#2f3542' };
-}
-
-function isTaskCurrent(timeInterval) {
-    if (!timeInterval || !timeInterval.includes('-')) return false;
-    const now = new Date();
-    const current = now.getHours() * 60 + now.getMinutes();
-    const parts = timeInterval.split('-');
-    const [startH, startM] = parts[0].trim().split(':').map(Number);
-    const [endH, endM] = parts[1].trim().split(':').map(Number);
-    return current >= (startH * 60 + startM) && current <= (endH * 60 + endM);
-}
-
-function getTimeUntil(timeInterval) {
-    if (!timeInterval || !timeInterval.includes('-')) return "";
-    try {
-        const startTimeStr = timeInterval.split('-')[0].trim();
-        const [targetH, targetM] = startTimeStr.split(':').map(Number);
-        const now = new Date();
-        const currentMins = now.getHours() * 60 + now.getMinutes();
-        const targetMins = targetH * 60 + targetM;
-        const diff = targetMins - currentMins;
-        if (diff > 0 && diff <= 120) {
-            return `<span class="countdown-badge">starts in ${diff} min</span>`;
-        }
-    } catch (e) { return ""; }
-    return "";
-}
-
-function resetForm() {
-    ['timeInput', 'titleInput', 'descInput', 'categoryInput', 'priorityInput' , 'dateInput'].forEach(id => {
-        const el = document.getElementById(id);
-        if(el) el.value = '';
-    });
-}
-
-/* ==========================================
-   5. EVENT HANDLERS & INITIALIZATION
-   ========================================= */
-function searchTasks() {
-    const query = document.getElementById('searchInput').value.toLowerCase().trim();
-    if (query === "") return renderTasks(allTasks);
-    const filtered = allTasks.filter(t => (t.title || "").toLowerCase().includes(query) || (t.description || "").toLowerCase().includes(query));
-    renderTasks(filtered);
-}
-
-function filterTasks(status, element) {
-    document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active-filter'));
-    element.classList.add('active-filter');
-    if (status === 'active') renderTasks(allTasks.filter(t => !t.completed));
-    else if (status === 'completed') renderTasks(allTasks.filter(t => t.completed));
+function filterTasks(type, btn) {
+    document.querySelectorAll('.btn-side').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if(type === 'active') renderTasks(allTasks.filter(t => !t.completed));
+    else if(type === 'completed') renderTasks(allTasks.filter(t => t.completed));
     else renderTasks(allTasks);
 }
 
-function toggleDescription(taskId) {
-    const desc = document.getElementById(`desc-${taskId}`);
-    const btn = desc.nextElementSibling;
-    const isCollapsed = desc.classList.contains('collapsed');
-    desc.classList.toggle('collapsed', !isCollapsed);
-    desc.classList.toggle('expanded', isCollapsed);
-    btn.innerText = isCollapsed ? 'Show Less' : 'Read More';
+function searchTasks() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    renderTasks(allTasks.filter(t => t.title.toLowerCase().includes(q)));
 }
 
-async function updateDescription(id, newDescription) {
-    const task = allTasks.find(t => t.id === id);
-    if (!task) return;
+async function resetToAll() { fetchTasks(); }
 
-    try {
-        await fetch(`${API_URL}/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...task, description: newDescription })
-        });
-        // Nu apelăm fetchTasks aici pentru a nu reseta scroll-ul,
-        // doar actualizăm variabila locală
-        task.description = newDescription;
-    } catch (error) {
-        console.error("Update error:", error);
-    }
-}
-
-let actionToConfirm = null;
-function showModal(cb) { actionToConfirm = cb; document.getElementById('customModal').style.display = 'flex'; }
-function closeModal() { document.getElementById('customModal').style.display = 'none'; }
-document.getElementById('confirmBtn').onclick = async () => { if (actionToConfirm) await actionToConfirm(); closeModal(); };
-
-fetchTasks();
-//setInterval(() => renderTasks(allTasks), 60000);
-window.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-
-window.onload = () => {
-    const today = new Date().toISOString().split('T')[0];
-
-    // 1. Setăm data implicită în formular și blocăm trecutul
-    const dateInput = document.getElementById('dateInput');
-    if(dateInput) {
-        dateInput.value = today;
-        dateInput.min = today;
-    }
-
-    filterBySpecificDate(today);
-};
-
-
-
-/* ==========================================
-   6. CALENDAR INITIALIZATION
-   ========================================== */
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
     flatpickr("#inlineCalendar", {
         inline: true,
-        dateFormat: "Y-m-d",
-        defaultDate: "today",
-        onChange: function(selectedDates, dateStr) {
-            filterBySpecificDate(dateStr);
+        onChange: async (dates, dateStr) => {
+            const resp = await fetch(`${API_URL}/date?date=${dateStr}`);
+            renderTasks(await resp.json());
         }
     });
-});
 
-async function filterBySpecificDate(dateStr) {
-    try {
-        const response = await fetch(`${API_URL}/date?date=${dateStr}`);
-        const tasks = await response.json();
-        renderTasks(tasks);
-
-        document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active-filter'));
-    } catch (error) {
-        console.error("Error filtering by date:", error);
+    const reportBtn = document.getElementById('openReportBtn');
+    if(reportBtn) {
+        reportBtn.onclick = async () => {
+            const resp = await fetch(`${API_URL}/report`);
+            const data = await resp.json();
+            console.table(data);
+            alert("Report generated in console (F12)!");
+        };
     }
-}
-
-function resetToAll() {
     fetchTasks();
-
-    const calendar = document.querySelector("#inlineCalendar")._flatpickr;
-    if (calendar) {
-        calendar.clear();
-    }
-}
+});
