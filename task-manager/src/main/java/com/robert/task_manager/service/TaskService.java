@@ -57,6 +57,11 @@ public class TaskService {
         taskRepository.deleteById(id);
     }
 
+    public void deleteCompletedTasks() {
+        List<Task> completed = taskRepository.findByCompleted(true);
+        taskRepository.deleteAll(completed);
+    }
+
     private TaskDTO convertToDTO(Task task) {
         TaskDTO dto = new TaskDTO();
         dto.setId(task.getId());

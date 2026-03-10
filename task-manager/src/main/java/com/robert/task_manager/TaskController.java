@@ -40,6 +40,12 @@ public class TaskController {
         taskService.deleteTask(id);
     }
 
+    @DeleteMapping("/completed")
+    public ResponseEntity<Void> deleteCompletedTasks() {
+        taskService.deleteCompletedTasks(); // Trimitem comanda către Service
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<TaskDTO> getTaskById(@PathVariable Long id) {
         TaskDTO taskDTO = taskService.getTaskByIdDTO(id);

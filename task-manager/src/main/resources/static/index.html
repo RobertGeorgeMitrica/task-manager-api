@@ -7,87 +7,253 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
     <style>
-        :root { --primary: #2d6a4f; --success: #52b788; --danger: #e63946; }
+        :root { --primary: #2d6a4f; --success: #52b788; --danger: #e63946; --glass: rgba(255, 255, 255, 0.85); }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0; padding: 40px;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            margin: 0; padding: 30px;
             background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)),
                         url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1920&q=80');
             background-size: cover; background-attachment: fixed;
+            color: #2d3436;
         }
 
-        .container { max-width: 1300px; margin: auto; }
+        .container { max-width: 1400px; margin: auto; }
 
-        /* Add Task Card */
-        .main-card {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 30px; border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-bottom: 40px;
-        }
-
-        .input-row { display: grid; grid-template-columns: 1fr 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        input, select, textarea { padding: 12px; border-radius: 10px; border: 1px solid #ddd; outline: none; font-size: 14px; }
-
-        .btn-add {
-            background: var(--primary); color: white; border: none; padding: 12px 35px;
-            border-radius: 25px; font-weight: bold; cursor: pointer; float: right;
-            transition: 0.3s;
-        }
-
-        /* 3-Column Layout */
-        .grid-layout { display: flex; gap: 30px; align-items: flex-start; }
-
-        .sidebar-left { flex: 0 0 220px; }
-        .content-center { flex: 1; }
-        .sidebar-right { flex: 0 0 320px; }
-
-        /* Glassmorphism Cards */
-        .card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            padding: 20px; border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+        /* Modern Glass Input Card */
+        .input-card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            padding: 25px; border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            margin-bottom: 35px;
             border: 1px solid rgba(255,255,255,0.3);
         }
 
-        /* Task Cards */
-        .task-card {
-            background: white; border-radius: 15px; padding: 20px; margin-bottom: 15px;
-            display: flex; justify-content: space-between; align-items: center;
-            border-left: 8px solid var(--primary);
-            transition: 0.2s ease;
+        .input-grid { display: grid; grid-template-columns: 1.2fr 2.5fr 1.2fr 1.2fr 1.2fr; gap: 12px; margin-bottom: 12px; }
+        input, select, textarea {
+            padding: 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1);
+            background: white; outline: none; font-size: 14px;
         }
-        .priority-HIGH { border-left-color: var(--danger); }
-        .priority-MEDIUM { border-left-color: #f39c12; }
-        .priority-LOW { border-left-color: #3498db; }
+
+        .btn-main {
+            background: var(--primary); color: white; border: none; padding: 12px 40px;
+            border-radius: 25px; font-weight: bold; cursor: pointer; float: right;
+            transition: transform 0.2s, background 0.3s;
+        }
+        .btn-main:hover { transform: translateY(-2px); background: #1b4332; }
+
+        /* 3-Column Grid System */
+        .app-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr 320px; /* Definire clară coloane */
+            gap: 25px;
+            align-items: start;
+            width: 100%;
+        }
+
+        .center-col {
+            min-width: 0;
+        }
+
+        #searchInput {
+            width: 100%;
+            box-sizing: border-box; /* Include padding-ul în lățime */
+        }
+
+        .sidebar-panel {
+            background: var(--glass); backdrop-filter: blur(10px);
+            padding: 22px; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.3); margin-bottom: 20px;
+        }
+
+        .task-item {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-left: 8px solid #ddd; /* Default border */
+        }
+
+        .task-item:hover { transform: scale(1.01); box-shadow: 0 10px 25px rgba(0,0,0,0.12); }
+
+        /* Priority Colors */
+        .prio-HIGH { border-left-color: var(--danger); }
+        .prio-MEDIUM { border-left-color: #f39c12; }
+        .prio-LOW { border-left-color: #3498db; }
 
         /* Sidebar Buttons */
-        .btn-side {
-            width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 12px;
+        .filter-btn {
+            width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 14px;
             border: 1px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.2);
             color: white; font-weight: 600; cursor: pointer; text-align: left;
+            transition: 0.3s;
         }
-        .btn-side.active { background: var(--primary); }
-        .btn-clear { background: var(--danger); color: white; border: none; width: 100%; padding: 10px; border-radius: 10px; cursor: pointer; }
+        .filter-btn.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 
         /* Calendar Fix */
+        .calendar-box { width: 100% !important; max-width: 100%; }
         #inlineCalendar { width: 100% !important; }
-        .flatpickr-calendar { box-shadow: none !important; width: 100% !important; background: transparent !important; }
+        .flatpickr-calendar { width: 100% !important; box-shadow: none !important; border: none !important; }
+
+        /* Stats Bar */
+        .prog-bg { background: rgba(0,0,0,0.05); height: 10px; border-radius: 5px; margin: 12px 0; overflow: hidden; }
+        .prog-fill { background: var(--success); height: 100%; width: 0%; transition: 0.8s ease-out; }
+        /* Badges & Labels */
+        .badge-cat {
+            background: #e8f5e9; color: #2d6a4f;
+            padding: 4px 10px; border-radius: 6px;
+            font-size: 0.75rem; font-weight: bold; text-transform: uppercase;
+        }
+
+        .badge-DEEP_WORK { background-color: #2d6a4f; color: white; }
+        .badge-SPORT { background-color: #ff7675; color: white; }
+        .badge-SQL_PRACTICE { background-color: #a29bfe; color: white; }
+        .badge-DOCUMENTATION { background-color: #74b9ff; color: white; }
+        .badge-BREAK { background-color: #ffeaa7; color: #2d3436; }
+
+        /* Stilul comun pentru highlight */
+        .category-highlight {
+            padding: 4px 12px;
+            border-radius: 20px; /* Le face rotunjite ca niște pastile */
+            font-size: 0.75rem;
+            font-weight: 800;
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Sincronizăm și dunga laterală a task-ului cu fundalul badge-ului */
+        .task-item.DEEP_WORK { border-left: 6px solid #2d6a4f; }
+        .task-item.SPORT { border-left: 6px solid #ff7675; }
+        .task-item.SQL_PRACTICE { border-left: 6px solid #a29bfe; }
+        .task-item.DOCUMENTATION { border-left: 6px solid #74b9ff; }
+
+        .prio-label {
+            display: inline-block;
+            padding: 2px 8px; border-radius: 4px;
+            font-size: 0.7rem; font-weight: 800;
+            margin-top: 5px; color: white;
+        }
+        .bg-high { background: #e63946; }
+        .bg-medium { background: #f39c12; }
+        .bg-low { background: #3498db; }
+
+        /* Time Distribution Colors */
+        .dist-item { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; }
+        .dist-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+
+        /* Time Distribution Dots */
+        .dot-DEEP_WORK { background: #2d6a4f; }
+        .dot-SPORT { background: #ff7675; }
+        .dot-SQL_PRACTICE { background: #a29bfe; }
+        .dot-DOCUMENTATION { background: #74b9ff; }
+        .dot-BREAK { background: #ffeaa7; }
+
+        /* Efectul de sclipire pentru task-ul activ */
+        @keyframes activeGlow {
+            0% { box-shadow: 0 0 5px rgba(82, 183, 136, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(82, 183, 136, 0.9); border-color: #52b788; }
+            100% { box-shadow: 0 0 5px rgba(82, 183, 136, 0.5); }
+        }
+
+        .task-active {
+            animation: activeGlow 2s infinite;
+            border-left: 12px solid #52b788 !important;
+            background: rgba(232, 245, 233, 0.9) !important;
+        }
+
+        /* Data sub oră */
+        .task-date-sub {
+            font-size: 0.75rem;
+            color: #636e72;
+            display: block;
+            margin-top: 2px;
+        }
+
+        /* Restaurare stil butoane task-uri */
+        .btn-action {
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+            color: white !important;
+            min-width: 80px;
+        }
+
+        /* Verde pentru Done/Undo */
+        .btn-done {
+            background-color: #52b788 !important; /* Verdele tău specific */
+            box-shadow: 0 4px 10px rgba(82, 183, 136, 0.3);
+        }
+
+        .btn-done:hover {
+            background-color: #40916c !important;
+            transform: translateY(-1px);
+        }
+
+        /* Roșu pentru Remove */
+        .btn-remove {
+            background-color: #e63946 !important;
+            box-shadow: 0 4px 10px rgba(230, 57, 70, 0.3);
+        }
+
+        .btn-remove:hover {
+            background-color: #c1121f !important;
+            transform: translateY(-1px);
+        }
+
+        /* Stil pentru butonul de Undo (când sarcina e gata) */
+        .btn-undo {
+            background-color: #7f8c8d !important;
+        }
+
+        /* Stil unitar pentru cardurile din sidebar */
+        .sidebar-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        /* Stil pentru titlul secțiunii */
+        .sidebar-card h4 {
+            margin: 0 0 15px 0;
+            color: #2d3436;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #f1f2f6;
+            padding-bottom: 8px;
+        }
+
+        #timeDistributionContainer {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1 style="color: white; font-size: 2.5rem; margin-bottom: 30px;">Task Manager 🌿</h1>
+    <h1 style="color: white; font-size: 2.2rem; margin-bottom: 30px; font-weight: 800; letter-spacing: -1px;">Task Manager Pro 🌿</h1>
 
-    <div class="main-card">
-        <div class="input-row">
+    <div class="input-card">
+        <div class="input-grid">
             <select id="timeInput"></select>
-            <input type="text" id="titleInput" placeholder="What's the main focus?">
+            <input type="text" id="titleInput" placeholder="What is your main focus today?">
             <select id="categoryInput">
                 <option value="GENERAL">Category</option>
                 <option value="DEEP WORK">DEEP WORK</option>
@@ -96,49 +262,48 @@
                 <option value="DOCUMENTATION">DOCUMENTATION</option>
             </select>
             <select id="priorityInput">
-                <option value="LOW">Low Priority</option>
-                <option value="MEDIUM">Medium Priority</option>
-                <option value="HIGH">High Priority</option>
+                <option value="LOW">Low Prio</option>
+                <option value="MEDIUM">Medium Prio</option>
+                <option value="HIGH">High Prio</option>
             </select>
             <input type="date" id="dateInput">
         </div>
-        <textarea id="descInput" placeholder="Detailed notes (steps, links, sub-tasks)..." style="width: 100%; height: 70px; box-sizing: border-box;"></textarea>
-        <button class="btn-add" onclick="createTask()">+ ADD TASK</button>
+        <textarea id="descInput" placeholder="Add some detailed notes or steps..." style="width: 100%; height: 65px; box-sizing: border-box; margin-bottom: 15px;"></textarea>
+        <button class="btn-main" onclick="createTask()">+ CREATE TASK</button>
         <div style="clear: both;"></div>
     </div>
 
-    <div class="grid-layout">
-        <div class="sidebar-left">
-            <div class="card" style="background: white;">
-                <p style="margin:0; font-weight:bold;">Progress: <span id="percText">0%</span></p>
-                <div style="background:#eee; height:8px; border-radius:4px; margin:10px 0; overflow:hidden;">
-                    <div id="progBar" style="background:var(--success); width:0%; height:100%; transition:0.5s;"></div>
-                </div>
-                <small id="countText" style="color:#666;">0/0 Tasks left</small>
+    <div class="app-layout">
+        <div class="left-col">
+            <div class="sidebar-panel" style="background: white;">
+                <p style="margin:0; font-weight:700;">Daily Progress: <span id="percText" style="color: var(--primary);">0%</span></p>
+                <div class="prog-bg"><div id="progBar" class="prog-fill"></div></div>
+                <small id="countText" style="color: #636e72; font-weight: 600;">0/0 Tasks Completed</small>
             </div>
 
-            <button class="btn-side active" onclick="filterTasks('all', this)">All Tasks</button>
-            <button class="btn-side" onclick="filterTasks('active', this)">To Do</button>
-            <button class="btn-side" onclick="filterTasks('completed', this)">Finished</button>
-            <button class="btn-clear" onclick="clearCompleted()">🗑️ CLEAR FINISHED</button>
+            <button class="filter-btn active" onclick="filterTasks('all', this)">📂 All Focuses</button>
+            <button class="filter-btn" onclick="filterTasks('pending', this)">⏳ Pending</button>
+            <button class="filter-btn" onclick="filterTasks('finished', this)">✅ Finished</button>
 
-            <div class="card" style="margin-top:20px;">
-                <h4 style="margin-top:0">Time Distribution</h4>
+            <button class="filter-btn" style="background: var(--danger); margin-top: 10px; border: none;" onclick="clearCompleted()">🗑️ Clear Finished</button>
+
+            <div class="sidebar-panel" style="margin-top: 25px;">
+                <h4 style="margin: 0 0 15px 0; font-size: 0.9rem; text-transform: uppercase; color: #636e72;">Time Distribution</h4>
                 <div id="categoryStatsList"></div>
             </div>
         </div>
 
-        <div class="content-center">
-            <input type="text" id="searchInput" oninput="searchTasks()" placeholder="🔍 Search tasks..." style="width:100%; border:none; padding:15px; border-radius:15px; margin-bottom:20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <div class="center-col">
+            <input type="text" id="searchInput" oninput="searchTasks()" placeholder="🔍 Quick find task..." style="width: 100%; border: none; padding: 16px 20px; border-radius: 15px; margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); font-size: 16px;">
             <div id="taskList"></div>
         </div>
 
-        <div class="sidebar-right">
-            <div class="card" style="background: white; text-align:center;">
-                <h4 style="margin-top:0; color:var(--primary);">📅 SELECT DATE</h4>
+        <div class="right-col">
+            <div class="sidebar-panel calendar-box" style="background: white; text-align: center; padding: 15px;">
+                <h4 style="margin: 0 0 15px 0; color: var(--primary); font-weight: 800;">📅 CALENDAR</h4>
                 <div id="inlineCalendar"></div>
-                <button onclick="resetToAll()" class="btn-add" style="float:none; width:100%; margin-top:15px; border-radius:10px;">Reset to All</button>
-                <button id="openReportBtn" class="btn-add" style="float:none; width:100%; margin-top:10px; border-radius:10px; background:#2ecc71;">📊 Productivity Report</button>
+                <button onclick="resetToAll()" class="btn-main" style="float: none; width: 100%; margin-top: 20px; border-radius: 12px;">View All Tasks</button>
+                <button id="openReportBtn" class="btn-main" style="float: none; width: 100%; margin-top: 10px; border-radius: 12px; background: #2ecc71;">📊 Analytics Report</button>
             </div>
         </div>
     </div>
@@ -146,11 +311,12 @@
 
 <script src="script.js"></script>
 <script>
-    const sel = document.getElementById('timeInput');
+    // Time Populator
+    const tSel = document.getElementById('timeInput');
     for(let i=8; i<21; i++){
         let h = i < 10 ? '0'+i+':00' : i+':00';
-        let hN = (i+1) < 10 ? '0'+(i+1)+':00' : (i+1)+':00';
-        sel.innerHTML += `<option value="${h} - ${hN}">${h} - ${hN}</option>`;
+        let hNext = (i+1) < 10 ? '0'+(i+1)+':00' : (i+1)+':00';
+        tSel.innerHTML += `<option value="${h} - ${hNext}">${h} - ${hNext}</option>`;
     }
 </script>
 </body>

@@ -11,6 +11,7 @@ import java.util.List;
 public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByPriority(String priority);
     List<Task> findByDueDate(LocalDate date);
+    List<Task> findByCompleted(boolean completed);
 
     @Query("SELECT new com.robert.task_manager.dto.CategoryStats(t.category, COUNT(t), SUM(1.5)) " +
             "FROM Task t WHERE t.completed = true " +
