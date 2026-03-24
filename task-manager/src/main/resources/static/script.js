@@ -5,8 +5,8 @@ async function fetchTasks() {
     try {
         const response = await fetch(API_URL);
         const data = await response.json();
-        allTasks = data; // Salvăm în variabila globală
-        renderTasks(allTasks); // Afișăm totul inițial
+        allTasks = data;
+        renderTasks(allTasks);
     } catch (e) {
         console.error("Error at downloading tasks: ", e);
     }
@@ -57,7 +57,6 @@ function isTaskActive(timeRange) {
     const now = new Date();
     const currentTime = now.getHours() * 60 + now.getMinutes();
 
-    // Extragem orele (ex: "08:00 - 09:30")
     const parts = timeRange.split(' - ');
     const startParts = parts[0].split(':');
     const endParts = parts[1].split(':');
@@ -68,23 +67,61 @@ function isTaskActive(timeRange) {
     return currentTime >= startMin && currentTime <= endMin;
 }
 
+function formatDescription(text) {
+    if (!text) return 'No description...';
+
+    const lines = text.split('\n');
+    let hasList = false;
+
+    const formattedLines = lines.map(line => {
+        const trimmed = line.trim();
+
+        if (/^[-*>•➔]/.test(trimmed) || /^\d+\./.test(trimmed)) {
+            hasList = true;
+            const cleanContent = trimmed.replace(/^[-*>•➔]\s*|^\d+\.\s*/, '');
+            return `<li>${cleanContent}</li>`;
+        }
+        return line;
+    });
+
+    return hasList ? `<ul class="task-desc-list">${formattedLines.join('')}</ul>` : text;
+}
+
 function renderTasks(tasks) {
+    tasks.sort((a, b) => a.completed - b.completed);
+
     const list = document.getElementById('taskList');
     list.innerHTML = '';
+
+    if (tasks.length === 0) {
+            list.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #636e72;">
+                    <p style="font-size: 1.2rem;">☕ No tasks here.</p>
+                    <p style="font-size: 0.9rem;">Enjoy your break or add a new goal above!</p>
+                </div>
+            `;
+            updateStats();
+            return;
+     }
 
     tasks.forEach(t => {
         const activeClass = isTaskActive(t.timeInterval) ? 'task-active' : '';
         const prioClass = t.priority === 'HIGH' ? 'bg-high' : (t.priority === 'MEDIUM' ? 'bg-medium' : 'bg-low');
 
-        // 1. Pregătim clasa pentru badge și border-ul lateral bazat pe categorie
-        // Transformăm "DEEP WORK" în "DEEP_WORK" pentru a se potrivi cu CSS-ul
         const catClass = t.category ? t.category.replace(/\s+/g, '_') : 'GENERAL';
 
         const div = document.createElement('div');
-        // Adăugăm catClass direct pe div-ul principal pentru dunga laterală
         div.className = `task-item ${catClass} ${activeClass}`;
 
         const doneBtnClass = t.completed ? 'btn-undo' : 'btn-done';
+
+        const fullDesc = t.description || '';
+        const formattedFullDesc = formatDescription(fullDesc);
+        const isLong = fullDesc.length > 120; // Ajustăm limita pentru liste
+        const shortDesc = isLong ? formatDescription(fullDesc.substring(0, 120)) + '...' : formattedFullDesc;
+
+        const isDoneClass = t.completed ? 'completed-style' : '';
+        div.className = `task-item ${catClass} ${activeClass} ${isDoneClass}`;
 
         div.innerHTML = `
             <div>
@@ -100,11 +137,22 @@ function renderTasks(tasks) {
 
                 <div class="prio-label ${prioClass}">${t.priority}</div>
 
-                <p contenteditable="true"
-                   onblur="saveEdit(${t.id}, 'description', this.innerText)"
-                   style="color: #636e72; margin: 10px 0; font-size: 0.9rem; outline: none; cursor: text;">
-                    ${t.description || 'Add description...'}
-                </p>
+                <div id="desc-${t.id}"
+                     contenteditable="true"
+                     onblur="saveEdit(${t.id}, 'description', this.innerText)"
+                     style="color: #636e72; margin: 10px 0; font-size: 0.9rem; outline: none; cursor: text; transition: all 0.3s;">
+                    ${shortDesc}
+                </div>
+
+                ${isLong ? `
+                    <button onclick="toggleReadMore(${t.id}, \`${fullDesc.replace(/`/g, '\\`').replace(/\n/g, '\\n')}\`)"
+                            class="read-more-btn"
+                            style="background:none; border:none; color:#2d6a4f; cursor:pointer; font-size:0.75rem; padding:0; font-weight:bold;">
+                        Read More
+                    </button>` : ''}
+                <div style="font-size: 0.7rem; color: #b2bec3; margin-top: 5px;">
+                    ${t.updatedAt ? `Last update: ${new Date(t.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : ''}
+                </div>
             </div>
 
             <div style="text-align: right; min-width: 140px;">
@@ -132,12 +180,10 @@ function updateStats() {
     const done = allTasks.filter(t => t.completed).length;
     const perc = total > 0 ? Math.round((done / total) * 100) : 0;
 
-    // 1. Actualizăm Progresul (Bara de sus)
     document.getElementById('progBar').style.width = perc + '%';
     document.getElementById('percText').innerText = perc + '%';
     document.getElementById('countText').innerText = `${total - done} Tasks left`;
 
-    // 2. Calculăm statisticile pe categorii
     const catStats = {};
     allTasks.forEach(t => {
         if(t.category) {
@@ -145,14 +191,12 @@ function updateStats() {
         }
     });
 
-    // 3. REPARAȚIA VIZUALĂ: Aplicăm stilul de card pe containerul părinte
     const container = document.getElementById('categoryStatsList').parentElement;
     container.style.backgroundColor = "white";
     container.style.borderRadius = "15px";
     container.style.padding = "20px";
     container.style.boxShadow = "0 4px 15px rgba(0,0,0,0.05)";
 
-    // 4. Generăm lista de badge-uri (Highlited Text)
     document.getElementById('categoryStatsList').innerHTML = Object.entries(catStats)
         .map(([cat, count]) => {
             const cssClass = cat.replace(/\s+/g, '_');
@@ -166,21 +210,22 @@ function updateStats() {
             `;
         }).join('');
 
-    // 5. Confetti
     if(perc === 100 && total > 0) {
         confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
     }
 }
 
 function filterTasks(status, element) {
-    // 1. Schimbăm starea vizuală a butoanelor
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
     if (element) element.classList.add('active');
 
-    // 2. Siguranță: dacă allTasks nu e încărcat, nu facem nimic
+    localStorage.setItem('activeFilter', status);
+
+    const buttons = document.querySelectorAll('.sidebar-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+
     if (!allTasks) return;
 
-    // 3. Aplicăm filtrarea logică
     let filtered;
     if (status === 'all') {
         filtered = allTasks;
@@ -190,25 +235,37 @@ function filterTasks(status, element) {
         filtered = allTasks.filter(t => t.completed);
     }
 
-    // 4. Randăm lista (trimitem un array gol dacă, prin absurd, filtered e null)
     renderTasks(filtered || []);
 }
 
 function searchTasks() {
     const q = document.getElementById('searchInput').value.toLowerCase();
+    localStorage.setItem('lastSearch', q);
     renderTasks(allTasks.filter(t => t.title.toLowerCase().includes(q)));
 }
 
+function toggleReadMore(id, fullText) {
+    const p = document.getElementById(`desc-${id}`);
+    const btn = p.nextElementSibling;
+
+    if (btn.innerText === "Read More") {
+        // Folosim innerHTML și formatăm textul lung
+        p.innerHTML = formatDescription(fullText);
+        btn.innerText = "Show Less";
+    } else {
+        // Revenim la varianta scurtă formatată
+        p.innerHTML = formatDescription(fullText.substring(0, 120)) + "...";
+        btn.innerText = "Read More";
+    }
+}
+
 async function resetToAll() {
-    // 1. Resetăm vizual butoanele din stânga (le scoatem clasa 'active' și o punem pe 'All')
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
     const allBtn = document.querySelector('[onclick*="all"]');
     if(allBtn) allBtn.classList.add('active');
 
-    // 2. Aduce toate task-urile de la server
     await fetchTasks();
 
-    // 3. Opțional: Dacă vrei să resetezi și căutarea
     const search = document.getElementById('searchInput');
     if(search) search.value = '';
 }
@@ -216,31 +273,25 @@ async function resetToAll() {
 async function clearCompleted() {
     if(!confirm("Are you sure you want to remove all finished tasks?")) return;
 
-    // Trimitem o cerere către backend pentru a șterge task-urile cu statusul completed=true
     await fetch(`${API_URL}/completed`, { method: 'DELETE' });
 
-    // Reîmprospătăm lista de pe ecran
     fetchTasks();
 }
 
 async function saveEdit(id, field, value) {
-    // 1. Găsim task-ul original în lista noastră globală
     const task = allTasks.find(t => t.id === id);
     if (!task) return;
 
-    // 2. Verificăm dacă s-a schimbat ceva (curățăm de spații inutile)
     const newValue = value.trim();
     if (task[field] === newValue) return;
 
-    // 3. Actualizăm local obiectul
     task[field] = newValue;
 
     try {
-        // 4. Trimitem cererea PUT către backend (TaskController - updateTask)
         const response = await fetch(`${API_URL}/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(task) // Trimitem obiectul COMPLET (titlu, desc, cat, prio, etc.)
+            body: JSON.stringify(task)
         });
 
         if (!response.ok) {
@@ -248,21 +299,31 @@ async function saveEdit(id, field, value) {
         }
 
         console.log(`✅ Succes: ${field} actualizat pentru task-ul ${id}`);
-        // Nu apelăm fetchTasks() aici pentru a nu reseta focusul sau cursorul utilizatorului
     } catch (e) {
         console.error("❌ Error while saving:", e);
         alert("Could not save changes. Please check server connection.");
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    flatpickr("#inlineCalendar", {
-        inline: true,
-        onChange: async (dates, dateStr) => {
-            const resp = await fetch(`${API_URL}/date?date=${dateStr}`);
-            renderTasks(await resp.json());
-        }
-    });
+document.addEventListener('DOMContentLoaded', async () => {
+        await fetchTasks();
+
+        const savedFilter = localStorage.getItem('activeFilter') || 'all';
+
+        const targetBtn = document.querySelector(`[onclick*="'${savedFilter}'"]`);
+        filterTasks(savedFilter, targetBtn);
+
+        const lastSearch = localStorage.getItem('lastSearch') || '';
+        document.getElementById('searchInput').value = lastSearch;
+        if(lastSearch) searchTasks();
+
+        flatpickr("#inlineCalendar", {
+            inline: true,
+            onChange: async (dates, dateStr) => {
+                const resp = await fetch(`${API_URL}/date?date=${dateStr}`);
+                renderTasks(await resp.json());
+            }
+        });
 
     const reportBtn = document.getElementById('openReportBtn');
     if(reportBtn) {
@@ -274,4 +335,22 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
     fetchTasks();
+});
+
+document.addEventListener('keydown', (e) => {
+    const el = e.target;
+    if (!el.id || !el.id.startsWith('desc-')) return;
+
+    if (e.key === 'Enter') {
+        // Verificăm dacă linia curentă începe cu simbolul nostru
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
+        const textInLine = range.startContainer.textContent || "";
+
+        if (textInLine.includes('➔')) {
+            e.preventDefault();
+            // Inserăm un rând nou care începe direct cu simbolul
+            document.execCommand('insertHTML', false, '<br>➔&nbsp;');
+        }
+    }
 });

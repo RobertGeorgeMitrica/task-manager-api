@@ -22,7 +22,6 @@ public class TaskService {
     }
 
     public TaskDTO saveTaskDTO(TaskDTO taskDTO) {
-        // 1. Convertim DTO-ul primit de la client în Entitate pentru baza de date
         Task task = convertToEntity(taskDTO);
         Task savedTask = taskRepository.save(task);
         return convertToDTO(savedTask);

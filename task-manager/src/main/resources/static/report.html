@@ -27,9 +27,8 @@
         const done = tasks.filter(t => t.completed).length;
         const pending = tasks.length - done;
 
-        // Inițializăm Graficul
         new Chart(document.getElementById('productivityChart'), {
-            type: 'doughnut', // Arată mai modern decât pie-ul clasic
+            type: 'doughnut',
             data: {
                 labels: ['Finished', 'Pending'],
                 datasets: [{

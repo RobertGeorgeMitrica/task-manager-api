@@ -42,7 +42,7 @@ public class TaskController {
 
     @DeleteMapping("/completed")
     public ResponseEntity<Void> deleteCompletedTasks() {
-        taskService.deleteCompletedTasks(); // Trimitem comanda către Service
+        taskService.deleteCompletedTasks();
         return ResponseEntity.noContent().build();
     }
 
@@ -53,7 +53,7 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TaskDTO> updateTask(@Valid @PathVariable Long id, @RequestBody TaskDTO taskdetailsDTO){
+    public ResponseEntity<TaskDTO> updateTask(@PathVariable Long id,@Valid @RequestBody TaskDTO taskdetailsDTO){
         TaskDTO updateTask = taskService.updateTask(id, taskdetailsDTO);
         return new ResponseEntity<>(updateTask, HttpStatus.OK);
     }

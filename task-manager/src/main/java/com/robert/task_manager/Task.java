@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 @Entity
@@ -28,6 +29,8 @@ public class Task {
     private String category;
     private String priority = "LOW";
     private LocalDate dueDate;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
 
     public Task() {}
@@ -58,5 +61,32 @@ public class Task {
     }
 
     public Long getId() { return id; }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 
 }

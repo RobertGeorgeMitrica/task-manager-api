@@ -243,6 +243,47 @@
             padding: 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
+
+        /* Stil pentru task-urile completate */
+        .task-item.completed-style {
+            opacity: 0.6;
+            background: #f1f2f6 !important;
+            border-left: 5px solid #bdc3c7 !important;
+        }
+
+        .task-item.completed-style h3 {
+            text-decoration: line-through;
+            color: #a4b0be;
+        }
+
+        .task-item.completed-style .category-highlight,
+        .task-item.completed-style .prio-label {
+            background: #dfe4ea !important;
+            color: #747d8c !important;
+        }
+
+        /* Stil pentru listele din descriere */
+        .task-desc-list {
+            list-style: none; /* Eliminăm bulina standard */
+            padding-left: 5px;
+            margin: 5px 0;
+        }
+
+        .task-desc-list li {
+            position: relative;
+            padding-left: 25px;
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+
+        /* Adăugăm săgeata/bulina personalizată */
+        .task-desc-list li::before {
+            content: '🌱'; /* Poți pune '🌱', '➤' sau '•' */
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -313,7 +354,6 @@
 
 <script src="script.js"></script>
 <script>
-    // Time Populator
     const tSel = document.getElementById('timeInput');
     for(let i=8; i<21; i++){
         let h = i < 10 ? '0'+i+':00' : i+':00';
