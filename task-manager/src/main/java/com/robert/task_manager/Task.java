@@ -21,6 +21,7 @@ public class Task {
     @Size(min = 3, message = "Title needs to have at least 3 characters!")
     private String title;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     private boolean completed = false;
@@ -29,7 +30,10 @@ public class Task {
     private String category;
     private String priority = "LOW";
     private LocalDate dueDate;
+
+    @Column(updatable = false)
     private LocalDateTime createdAt;
+
     private LocalDateTime updatedAt;
 
 

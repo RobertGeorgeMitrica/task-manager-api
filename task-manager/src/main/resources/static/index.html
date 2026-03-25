@@ -284,6 +284,58 @@
             color: var(--primary);
             font-weight: bold;
         }
+
+        .task-desc-list {
+        display: block !important; /* Forțează afișarea unul sub altul */
+        margin-top: 8px !important;
+        padding-left: 15px !important;
+        list-style: none !important;
+        }
+
+        .task-desc-list li {
+            display: list-item !important;
+            margin-bottom: 5px;
+            position: relative;
+        }
+
+        /* Adăugăm simbolul vizual dacă lipsește din randare */
+        .task-desc-list li::before {
+            content: "➔";
+            margin-right: 8px;
+            color: #2d6a4f;
+        }
+
+        /* Containerul descrierii dintr-un task */
+        .task-desc-container {
+            max-height: 80px;      /* Afișăm aproximativ 3-4 rânduri de text/listă */
+            overflow: hidden;       /* Ascundem tot ce depășește înălțimea de mai sus */
+            transition: max-height 0.4s ease-in-out; /* Animație fluidă la extindere */
+            position: relative;
+            margin: 10px 0;
+        }
+
+        /* Clasa pe care o vom adăuga din JS pentru a arăta tot textul */
+        .task-desc-container.expanded {
+            max-height: 1000px; /* O valoare suficient de mare pentru orice descriere */
+            overflow: visible;  /* Permitem vizualizarea completă */
+        }
+
+        /* Stil pentru butonul Read More/Show Less */
+        .read-more-btn {
+            background: none;
+            border: none;
+            color: #2d6a4f; /* Verdele aplicației tale */
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0;
+            margin-top: 5px;
+            font-weight: bold;
+            display: inline-block; /* Asigurăm că e vizibil */
+        }
+
+        .read-more-btn:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>

@@ -1,5 +1,6 @@
 package dto;
 
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -8,7 +9,10 @@ import java.time.LocalDate;
 public class TaskDTO {
     private Long id;
     private String title;
+
+    @Size(max = 5000, message = "Description too long!")
     private String description;
+
     private boolean completed;
     private String timeInterval;
     private String category;

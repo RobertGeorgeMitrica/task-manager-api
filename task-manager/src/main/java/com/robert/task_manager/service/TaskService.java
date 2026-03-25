@@ -22,7 +22,8 @@ public class TaskService {
     }
 
     public TaskDTO saveTaskDTO(TaskDTO taskDTO) {
-        Task task = convertToEntity(taskDTO);
+        Task task = new Task();
+        copyDtoToEntity(taskDTO, task);
         Task savedTask = taskRepository.save(task);
         return convertToDTO(savedTask);
     }
@@ -34,24 +35,18 @@ public class TaskService {
     }
 
     public TaskDTO updateTask(Long id, TaskDTO taskDetailsDTO) {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Update not possible! Task ID " + id + " not found."));
+        Task existingTask = taskRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Task not found!"));
 
-        task.setTitle(taskDetailsDTO.getTitle());
-        task.setDescription(taskDetailsDTO.getDescription());
-        task.setCompleted(taskDetailsDTO.isCompleted());
-        task.setTimeInterval(taskDetailsDTO.getTimeInterval());
-        task.setCategory(taskDetailsDTO.getCategory());
-        task.setPriority(taskDetailsDTO.getPriority());
-        task.setDueDate(taskDetailsDTO.getDueDate());
+        copyDtoToEntity(taskDetailsDTO, existingTask);
 
-        Task updatedTask = taskRepository.save(task);
+        Task updatedTask = taskRepository.save(existingTask);
         return convertToDTO(updatedTask);
     }
 
     public void deleteTask(Long id) {
         if (!taskRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Nu pot șterge! Task-ul cu ID " + id + " nu a fost găsit.");
+            throw new ResourceNotFoundException("No taask to be deleted! Task with ID " + id + " was not found.");
         }
         taskRepository.deleteById(id);
     }
@@ -74,17 +69,14 @@ public class TaskService {
         return dto;
     }
 
-    private Task convertToEntity(TaskDTO dto) {
-        Task task = new Task();
-
-        task.setTitle(dto.getTitle());
-        task.setDescription(dto.getDescription());
-        task.setCompleted(dto.isCompleted());
-        task.setTimeInterval(dto.getTimeInterval());
-        task.setCategory(dto.getCategory());
-        task.setPriority(dto.getPriority());
-        task.setDueDate(dto.getDueDate());
-        return task;
+    private void copyDtoToEntity(TaskDTO dto, Task entity) {
+        entity.setTitle(dto.getTitle());
+        entity.setDescription(dto.getDescription());
+        entity.setCompleted(dto.isCompleted());
+        entity.setTimeInterval(dto.getTimeInterval());
+        entity.setCategory(dto.getCategory());
+        entity.setPriority(dto.getPriority());
+        entity.setDueDate(dto.getDueDate());
     }
 
     public List<TaskDTO> getAllTasksDTO() {

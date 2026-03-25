@@ -1,5 +1,6 @@
 const API_URL = '/api/tasks';
 let allTasks = [];
+let currentSelectedDate = null;
 
 async function fetchTasks() {
     try {
@@ -32,7 +33,7 @@ async function createTask() {
 
     document.getElementById('titleInput').value = '';
     document.getElementById('descInput').value = '';
-    fetchTasks();
+    refreshCurrentView();
 }
 
 async function toggleTask(id, currentStatus) {
@@ -42,13 +43,13 @@ async function toggleTask(id, currentStatus) {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({...task, completed: !currentStatus})
     });
-    fetchTasks();
+    refreshCurrentView();
 }
 
 async function deleteTask(id) {
     if(confirm("Delete this task?")) {
         await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-        fetchTasks();
+        refreshCurrentView();
     }
 }
 
@@ -71,20 +72,25 @@ function formatDescription(text) {
     if (!text) return 'No description...';
 
     const lines = text.split('\n');
-    let hasList = false;
+    let listItems = [];
+    let normalText = [];
 
-    const formattedLines = lines.map(line => {
+    lines.forEach(line => {
         const trimmed = line.trim();
-
-        if (/^[-*>•➔]/.test(trimmed) || /^\d+\./.test(trimmed)) {
-            hasList = true;
-            const cleanContent = trimmed.replace(/^[-*>•➔]\s*|^\d+\.\s*/, '');
-            return `<li>${cleanContent}</li>`;
+        if (/^[➔\-*>•]/.test(trimmed) || /^\d+\./.test(trimmed)) {
+            const cleanContent = trimmed.replace(/^[➔\-*>•]\s*|^\d+\.\s*/, '');
+            listItems.push(`<li>${cleanContent}</li>`);
+        } else if (trimmed !== "") {
+            normalText.push(trimmed);
         }
-        return line;
     });
 
-    return hasList ? `<ul class="task-desc-list">${formattedLines.join('')}</ul>` : text;
+    let result = normalText.join('<br>');
+    if (listItems.length > 0) {
+        result += `<ul class="task-desc-list">${listItems.join('')}</ul>`;
+    }
+
+    return result || text;
 }
 
 function renderTasks(tasks) {
@@ -117,41 +123,40 @@ function renderTasks(tasks) {
 
         const fullDesc = t.description || '';
         const formattedFullDesc = formatDescription(fullDesc);
-        const isLong = fullDesc.length > 120; // Ajustăm limita pentru liste
-        const shortDesc = isLong ? formatDescription(fullDesc.substring(0, 120)) + '...' : formattedFullDesc;
+        const needsReadMore = fullDesc.length > 120;
+        const shortDesc = needsReadMore ? formatDescription(fullDesc.substring(0, 120)) + '...' : formattedFullDesc;
 
         const isDoneClass = t.completed ? 'completed-style' : '';
         div.className = `task-item ${catClass} ${activeClass} ${isDoneClass}`;
 
         div.innerHTML = `
             <div>
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                    <h3 contenteditable="true"
-                        onblur="saveEdit(${t.id}, 'title', this.innerText)"
-                        style="margin: 0; font-size: 1.1rem; outline: none; cursor: text;">
-                        ${t.title}
-                    </h3>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <h3 contenteditable="true" onblur="saveEdit(${t.id}, 'title', this.innerText)" style="margin: 0; font-size: 1.1rem; outline: none; cursor: text;">
+                            ${t.title}
+                        </h3>
+                        <span class="category-highlight badge-${catClass}">${t.category}</span>
+                    </div>
 
-                    <span class="category-highlight badge-${catClass}">${t.category}</span>
-                </div>
+                    <div class="prio-label ${prioClass}">${t.priority}</div>
 
-                <div class="prio-label ${prioClass}">${t.priority}</div>
+                    <div id="desc-container-${t.id}" class="task-desc-container">
+                        <div id="desc-${t.id}"
+                             contenteditable="true"
+                             onblur="saveEdit(${t.id}, 'description', this.innerText)"
+                             style="color: #636e72; margin: 0; font-size: 0.9rem; outline: none; cursor: text;">
+                            ${formattedFullDesc}
+                        </div>
+                    </div>
 
-                <div id="desc-${t.id}"
-                     contenteditable="true"
-                     onblur="saveEdit(${t.id}, 'description', this.innerText)"
-                     style="color: #636e72; margin: 10px 0; font-size: 0.9rem; outline: none; cursor: text; transition: all 0.3s;">
-                    ${shortDesc}
-                </div>
+                    ${needsReadMore ? `
+                        <button onclick="toggleReadMore(${t.id})" class="read-more-btn">
+                            Read More
+                        </button>` : ''}
 
-                ${isLong ? `
-                    <button onclick="toggleReadMore(${t.id}, \`${fullDesc.replace(/`/g, '\\`').replace(/\n/g, '\\n')}\`)"
-                            class="read-more-btn"
-                            style="background:none; border:none; color:#2d6a4f; cursor:pointer; font-size:0.75rem; padding:0; font-weight:bold;">
-                        Read More
-                    </button>` : ''}
-                <div style="font-size: 0.7rem; color: #b2bec3; margin-top: 5px;">
-                    ${t.updatedAt ? `Last update: ${new Date(t.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : ''}
+                    <div style="font-size: 0.7rem; color: #b2bec3; margin-top: 5px;">
+                        ${t.updatedAt ? `Last update: ${new Date(t.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : ''}
+                    </div>
                 </div>
             </div>
 
@@ -199,11 +204,13 @@ function updateStats() {
 
     document.getElementById('categoryStatsList').innerHTML = Object.entries(catStats)
         .map(([cat, count]) => {
-            const cssClass = cat.replace(/\s+/g, '_');
+            const safeCat = cat || 'General';
+            const cssClass = safeCat.replace(/\s+/g, '_');
+
             return `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                     <span class="category-highlight badge-${cssClass}" style="padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.75rem;">
-                        ${cat}
+                        ${safeCat}
                     </span>
                     <b style="color: #2d6a4f; font-size: 0.85rem;">${count} tasks</b>
                 </div>
@@ -244,18 +251,16 @@ function searchTasks() {
     renderTasks(allTasks.filter(t => t.title.toLowerCase().includes(q)));
 }
 
-function toggleReadMore(id, fullText) {
-    const p = document.getElementById(`desc-${id}`);
-    const btn = p.nextElementSibling;
+function toggleReadMore(id) {
+    const container = document.getElementById(`desc-container-${id}`);
+    const btn = container.nextElementSibling; // Butonul este fix după container
 
-    if (btn.innerText === "Read More") {
-        // Folosim innerHTML și formatăm textul lung
-        p.innerHTML = formatDescription(fullText);
-        btn.innerText = "Show Less";
-    } else {
-        // Revenim la varianta scurtă formatată
-        p.innerHTML = formatDescription(fullText.substring(0, 120)) + "...";
+    if (container.classList.contains('expanded')) {
+        container.classList.remove('expanded');
         btn.innerText = "Read More";
+    } else {
+        container.classList.add('expanded');
+        btn.innerText = "Show Less";
     }
 }
 
@@ -305,52 +310,40 @@ async function saveEdit(id, field, value) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-        await fetchTasks();
-
-        const savedFilter = localStorage.getItem('activeFilter') || 'all';
-
-        const targetBtn = document.querySelector(`[onclick*="'${savedFilter}'"]`);
-        filterTasks(savedFilter, targetBtn);
-
-        const lastSearch = localStorage.getItem('lastSearch') || '';
-        document.getElementById('searchInput').value = lastSearch;
-        if(lastSearch) searchTasks();
-
-        flatpickr("#inlineCalendar", {
-            inline: true,
-            onChange: async (dates, dateStr) => {
-                const resp = await fetch(`${API_URL}/date?date=${dateStr}`);
-                renderTasks(await resp.json());
-            }
-        });
-
-    const reportBtn = document.getElementById('openReportBtn');
-    if(reportBtn) {
-        reportBtn.onclick = async () => {
-            const resp = await fetch(`${API_URL}/report`);
-            const data = await resp.json();
-            console.table(data);
-            alert("Report generated in console (F12)!");
-        };
+async function refreshCurrentView() {
+    if (currentSelectedDate) {
+        const resp = await fetch(`${API_URL}/date?date=${currentSelectedDate}`);
+        renderTasks(await resp.json());
+    } else {
+        fetchTasks();
     }
-    fetchTasks();
-});
+}
 
 document.addEventListener('keydown', (e) => {
     const el = e.target;
-    if (!el.id || !el.id.startsWith('desc-')) return;
+    if (!el.hasAttribute('contenteditable')) return;
 
     if (e.key === 'Enter') {
-        // Verificăm dacă linia curentă începe cu simbolul nostru
         const selection = window.getSelection();
         const range = selection.getRangeAt(0);
-        const textInLine = range.startContainer.textContent || "";
 
-        if (textInLine.includes('➔')) {
+        if (el.innerText.includes('➔')) {
             e.preventDefault();
-            // Inserăm un rând nou care începe direct cu simbolul
             document.execCommand('insertHTML', false, '<br>➔&nbsp;');
         }
     }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    flatpickr("#inlineCalendar", {
+        inline: true,
+        defaultDate: "today",
+        onChange: async (selectedDates, dateStr) => {
+            currentSelectedDate = dateStr;
+            const response = await fetch(`${API_URL}/date?date=${dateStr}`);
+            const tasks = await response.json();
+            renderTasks(tasks);
+        }
+    });
+    fetchTasks();
 });
